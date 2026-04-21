@@ -295,8 +295,6 @@ ultimate.aa.flickState = false
 ultimate.aa.lastFlick = 0
 ultimate.aa.zigzagState = 0
 ultimate.aa.lastZigzag = 0
-ultimate.aa.lastHitTime = 0
-ultimate.aa.hitSwitchActive = false
 
 local function GetSide()
     return ultimate.inverted and 1 or -1
@@ -375,35 +373,6 @@ local function FreestandAngle()
     end
 end
 
-local function SwitchAAOnHit()
-    if not ultimate.cfg.vars["AA switch on hit"] then return end
-    
-    local curTime = CurTime()
-    if curTime - ultimate.aa.lastHitTime < ultimate.cfg.vars["AA switch delay"] then
-        return
-    end
-    
-    ultimate.aa.lastHitTime = curTime
-    ultimate.aa.hitSwitchActive = true
-    
-    local selectedPresets = {}
-    for presetName, enabled in pairs(ultimate.cfg.vars["AA switch presets"]) do
-        if enabled then
-            for idx, name in ipairs(ultimate.presets["Yaw"]) do
-                if name == presetName then
-                    table_insert(selectedPresets, idx)
-                    break
-                end
-            end
-        end
-    end
-    
-    if #selectedPresets > 0 then
-        local randomIdx = math_random(1, #selectedPresets)
-        ultimate.cfg.vars["Yaw"] = selectedPresets[randomIdx]
-    end
-end
-
 ultimate.ch = ultimate.ch or {
     time = 0,
     split = false,
@@ -437,23 +406,6 @@ surface.CreateFont("Watermark_Bold11", {
     shadow = true
 })
 
-surface.CreateFont("KS_Main", {
-    font = "Arial Black",
-    size = 28,
-    weight = 900,
-    antialias = true,
-    shadow = true,
-})
-
-surface.CreateFont("KS_Sub", {
-    font = "Arial Black",
-    size = 16,
-    weight = 700,
-    antialias = true,
-    shadow = true,
-})
-
-
 surface.CreateFont( "DermaSmall", {	-- текстик
     font = "Tahoma",
     antialias = false,
@@ -467,15 +419,6 @@ surface_CreateFont( "ultimate_font_2", {
     weight = 500,
     antialias = false,
     shadow = true
-})
-
-
-
-surface.CreateFont("KS_Counter", {
-    font = "Tahoma",
-    size = 38,
-    weight = 900,
-    antialias = true,
 })
 
 surface_CreateFont( "ultimate_font_3", {
@@ -757,11 +700,6 @@ ultimate.cfg.vars["LBY break delta"]            = 120
 ultimate.cfg.vars["Sin delta"]                  = 89
 ultimate.cfg.vars["Sin add"]                    = 11
 ultimate.cfg.vars["Jitter delta"]               = 45
-
-// AA Switch on hit/miss
-ultimate.cfg.vars["AA switch on hit"]          = false
-ultimate.cfg.vars["AA switch delay"]           = 0.5
-ultimate.cfg.vars["AA switch presets"]         = {} 
 
 
 
@@ -1180,7 +1118,7 @@ ultimate.cfg.vars["Hitnumbers"] = false
 
 ultimate.cfg.vars["Hitsound"] = false
 ultimate.cfg.vars["Killsound"] = false
-ultimate.cfg.vars["Killstreak"] = ultimate.cfg.vars["Killstreak"] or false
+ultimate.cfg.vars["Killstreak"] = false
 
 ultimate.cfg.vars["Hitsound str"] = "phx/hmetal1.wav"
 ultimate.cfg.vars["Killsound str"] = "ambient/levels/canals/windchime2.wav"
@@ -3640,15 +3578,12 @@ function ultimate.tabs.Rage()
     ultimate.ui.ComboBox( p, "Pitch", "Pitch" )
     ultimate.ui.ComboBox( p, "Edge", "Edge", { "Disabled", "Hide", "Show", "Jitter" } )
 
-    local p = ultimate.itemPanel( "Tweaks", 1, 220 ):GetItemPanel()
+    local p = ultimate.itemPanel( "Tweaks", 1, 135 ):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "On shot aa", "On shot aa" )
     ultimate.ui.CheckBox( p, "Yaw randomisation", "Yaw randomisation" )
     ultimate.ui.CheckBox( p, "Freestanding", "Freestanding" )
     ultimate.ui.CheckBox( p, "Micromovement", "Micromovement" )
-    ultimate.ui.CheckBox( p, "AA switch on hit", "AA switch on hit" )
-    ultimate.ui.MultiCombo( p, "AA switch presets", ultimate.presets["Yaw"] )
-    ultimate.ui.Slider( p, "AA switch delay", "AA switch delay", 0, 5, 1 )
 
     local p = ultimate.itemPanel( "Custom angles", 1, 400 ):GetItemPanel()
 
@@ -4284,7 +4219,7 @@ function ultimate.tabs.Misc()
     ultimate.ui.TextEntry( "Sound path", "Hitsound str", p, 420 )
     ultimate.ui.CheckBox( p, "Killsound", "Killsound" )
     ultimate.ui.TextEntry( "Sound path", "Killsound str", p, 420 )
-ultimate.ui.CheckBox(p, "Killstreak", "Killstreak")
+    ultimate.ui.CheckBox( p, "Killstreak", "Killstreak" )
 
     local p = ultimate.itemPanel("Chat",2,282):GetItemPanel()
 
@@ -5087,7 +5022,7 @@ function ultimate.CanShoot( cmd )
         return false
     end
 
-	if ultimate.cfg.vars["Bullet time"] and ultimate.activeWeapon:GetNextPrimaryFire() >= ded.GetServerTime() then
+	if ultimate.cfg.vars["Bullet time"] and ultimate.activeWeapon:GetNextPrimaryFire() >= ded.GetServerTime(cmd) then
 		return false
 	end
 
@@ -5098,7 +5033,7 @@ function ultimate.CanShoot( cmd )
     local delay = 0
 	if ultimate.cfg.vars["ShootDelay"] then
 		delay = ultimate.cfg.vars["ShootDelay time"] / 1000
-        return ( ded.GetServerTime() - delay ) >= ultimate.activeWeapon:GetNextPrimaryFire()
+        return ( ded.GetServerTime(cmd) - delay ) >= ultimate.activeWeapon:GetNextPrimaryFire()
     end
 
     // print(ded.GetRandomSeed( cmd ))
@@ -5112,7 +5047,7 @@ end
 function ultimate.Spread( cmd, ang, spread )
 	if not ultimate.activeWeapon or not ultimate.cones[ ultimate.activeWeaponClass ] then return ang end
 
-	local dir = ded.PredictSpread( cmd, spread )
+	local dir = ded.PredictSpread( cmd, ang, spread )
 
 	local newangle = ang + dir:Angle()
     newangle:Normalize()
@@ -5149,8 +5084,11 @@ function ultimate.CustomSpread.swb( cmd, ang )
         ultimate.activeWeapon.BaseCone = ultimate.activeWeapon.BaseCone * ( ultimate.activeWeapon.dt.State == SWB_AIMING and 0.9 or 0.75 )
     end
 
-    local updatetime = ultimate.activeWeapon.GetSpreadUpdateTime(unpredicted)
-    local value = ultimate.activeWeapon.GetSpreadUpdateValue(unpredicted)
+    local updatetime = ultimate.activeWeapon.GetSpreadUpdateTime and ultimate.activeWeapon:GetSpreadUpdateTime(unpredicted) or 0
+    local value = 0
+    if ultimate.activeWeapon.GetSpreadUpdateValue then
+        value = ultimate.activeWeapon:GetSpreadUpdateValue(unpredicted)
+    end
 
     if updatetime > 0 then
         value = math_Clamp(value - 0.1333 * (CurTime() - updatetime), 0, ultimate.activeWeapon.MaxSpreadInc)
@@ -5390,40 +5328,58 @@ function ultimate.ParseBones( ply, bone )
     return 0
 end
 
-function ultimate.MultipointGroupCheck( group )
-    if group == 1 and not ultimate.cfg.vars["Multipoint groups-Head"] then return false end
-    if group == 2 and not ultimate.cfg.vars["Multipoint groups-Chest"] then return false end
-    if group == 3 and not ultimate.cfg.vars["Multipoint groups-Stomach"] then return false end
-    if group == 4 or group == 5 and not ultimate.cfg.vars["Multipoint groups-Arms"] then return false end
-    if group == 6 or group == 7 and not ultimate.cfg.vars["Multipoint groups-Legs"] then return false end
-    if group == 0 and not ultimate.cfg.vars["Multipoint groups-Generic"] then return false end
+// Кэшируем проверки групп для multipoint
+local multipoint_group_cache = {}
+local function UpdateMultipointCache()
+    local cfg = ultimate.cfg.vars
+    multipoint_group_cache[1] = cfg["Multipoint groups-Head"]
+    multipoint_group_cache[2] = cfg["Multipoint groups-Chest"]
+    multipoint_group_cache[3] = cfg["Multipoint groups-Stomach"]
+    multipoint_group_cache[4] = cfg["Multipoint groups-Arms"]
+    multipoint_group_cache[5] = cfg["Multipoint groups-Arms"]
+    multipoint_group_cache[6] = cfg["Multipoint groups-Legs"]
+    multipoint_group_cache[7] = cfg["Multipoint groups-Legs"]
+    multipoint_group_cache[0] = cfg["Multipoint groups-Generic"]
+end
+UpdateMultipointCache()
 
-    return true
+function ultimate.MultipointGroupCheck( group )
+    return multipoint_group_cache[group] or false
 end
 
+// Предрасчитанные точки multipoint (относительные координаты)
+local multipoint_offsets = {
+    Vector(0, 0, 0), // центр
+    Vector(-1, -1, -1), Vector(-1, 1, -1), Vector(1, 1, -1), Vector(1, -1, -1),
+    Vector(1, 1, 1), Vector(-1, 1, 1), Vector(-1, -1, 1), Vector(1, -1, 1),
+    Vector(0, -1, -1), Vector(0, 1, -1), Vector(-1, 0, -1), Vector(1, 0, -1),
+    Vector(0, 0, -1), Vector(0, 0, 1),
+    Vector(-1, -1, 0), Vector(-1, 1, 0), Vector(1, 1, 0), Vector(1, -1, 0)
+}
+
 function ultimate.GetBones( ply )
-    local scale_min = ultimate.cfg.vars["Multipoint scale min"]
-    local scale_max = ultimate.cfg.vars["Multipoint scale max"]
+    local cfg = ultimate.cfg.vars
+    local scale_min = cfg["Multipoint scale min"]
+    local scale_max = cfg["Multipoint scale max"]
     local pos = ply:LocalToWorld( ply:OBBCenter() )
     local set = ply:GetHitboxSet()
+    local use_multipoint = cfg["Multipoint"]
+    local use_hitscan = cfg["Hitscan"]
 
-    if ultimate.cfg.vars["Hitscan"] then
-        local set = ply:GetHitboxSet()
+    if use_hitscan then
         local bonecount = ply:GetBoneCount()
-
         pos = {}
 
         for i = 0, bonecount - 1 do
             local group = ply:GetHitBoxHitGroup( i, set )
+            if not group then continue end
 
-            if group == nil then continue end
-
-            if group == 1 and not ultimate.cfg.vars["Hitscan groups-Head"] then continue end
-            if group == 2 and not ultimate.cfg.vars["Hitscan groups-Chest"] then continue end
-            if group == 3 and not ultimate.cfg.vars["Hitscan groups-Stomach"] then continue end
-            if group == 4 or group == 5 and not ultimate.cfg.vars["Hitscan groups-Arms"] then continue end
-            if group == 6 or group == 7 and not ultimate.cfg.vars["Hitscan groups-Legs"] then continue end
-            if group == 0 and not ultimate.cfg.vars["Hitscan groups-Generic"] then continue end
+            if group == 1 and not cfg["Hitscan groups-Head"] then continue end
+            if group == 2 and not cfg["Hitscan groups-Chest"] then continue end
+            if group == 3 and not cfg["Hitscan groups-Stomach"] then continue end
+            if (group == 4 or group == 5) and not cfg["Hitscan groups-Arms"] then continue end
+            if (group == 6 or group == 7) and not cfg["Hitscan groups-Legs"] then continue end
+            if group == 0 and not cfg["Hitscan groups-Generic"] then continue end
 
             pos[ #pos + 1 ] = { bone = i, hitgroup = group }
         end
@@ -5448,46 +5404,31 @@ function ultimate.GetBones( ply )
 
             local bonepos, ang = ply:GetBonePosition( hitboxbone )
 
-            if ultimate.cfg.vars["Multipoint"] and ultimate.MultipointGroupCheck( pos[ i ].hitgroup ) then
-                local points = {
-                    ( ( mins + maxs ) * 0.5 ),
-
-                    Vector( mins.x, mins.y, mins.z ),
-                    Vector( mins.x, maxs.y, mins.z ),
-                    Vector( maxs.x, maxs.y, mins.z ),
-                    Vector( maxs.x, mins.y, mins.z ),
-                    Vector( maxs.x, maxs.y, maxs.z ),
-                    Vector( mins.x, maxs.y, maxs.z ),
-                    Vector( mins.x, mins.y, maxs.z ),
-                    Vector( maxs.x, mins.y, maxs.z ),
-
-                    Vector( (mins.x + maxs.x) * 0.5, mins.y, mins.z ),
-                    Vector( (mins.x + maxs.x) * 0.5, maxs.y, mins.z ),
-                    Vector( mins.x, (mins.y + maxs.y) * 0.5, mins.z ),
-                    Vector( maxs.x, (mins.y + maxs.y) * 0.5, mins.z ),
-                    Vector( (mins.x + maxs.x) * 0.5, (mins.y + maxs.y) * 0.5, mins.z ),
-                    Vector( (mins.x + maxs.x) * 0.5, (mins.y + maxs.y) * 0.5, maxs.z ),
-
-                    Vector( mins.x, mins.y, (mins.z + maxs.z) * 0.5 ),
-                    Vector( mins.x, maxs.y, (mins.z + maxs.z) * 0.5 ),
-                    Vector( maxs.x, maxs.y, (mins.z + maxs.z) * 0.5 ),
-                    Vector( maxs.x, mins.y, (mins.z + maxs.z) * 0.5 )
-                }
-
-                for i = 1, #points do
-                    points[ i ]:Rotate( ang )
-                    points[ i ] = points[ i ] + bonepos
-
-                    if i == 1 then continue end
-
-                    local scale = math_Clamp(
-                        scale_min + (scale_max - scale_min) * ((i-2) / (#points-2)),
-                        scale_min,
-                        scale_max
+            if use_multipoint and ultimate.MultipointGroupCheck( pos[ i ].hitgroup ) then
+                local center = (mins + maxs) * 0.5
+                local half_size = (maxs - mins) * 0.5
+                
+                // Предрасчитываем scale_range для избежания повторных вычислений
+                local scale_range = scale_max - scale_min
+                local points_count = #multipoint_offsets - 1
+                
+                for j = 1, #multipoint_offsets do
+                    local offset = multipoint_offsets[j]
+                    local point = Vector(
+                        center.x + offset.x * half_size.x,
+                        center.y + offset.y * half_size.y,
+                        center.z + offset.z * half_size.z
                     )
-
-                    points[ i ] = ( ( points[ i ] - points[1] ) * scale ) + points[ 1 ]
-                    valid[ #valid + 1 ] = points[ i ]
+                    
+                    point:Rotate(ang)
+                    point = point + bonepos
+                    
+                    if j > 1 then
+                        local scale = scale_min + scale_range * ((j-2) / points_count)
+                        point = ((point - (center + bonepos)) * scale) + (center + bonepos)
+                    end
+                    
+                    valid[#valid + 1] = point
                 end
             end
 
@@ -5515,45 +5456,33 @@ function ultimate.GetBones( ply )
 
         local bonepos, ang = ply:GetBonePosition( hitboxbone )
 
-        if ultimate.cfg.vars["Multipoint"] then
-            local points = {
-                ( ( mins + maxs ) * 0.5 ),
-
-                Vector( mins.x, mins.y, mins.z ),
-                Vector( mins.x, maxs.y, mins.z ),
-                Vector( maxs.x, maxs.y, mins.z ),
-                Vector( maxs.x, mins.y, mins.z ),
-                Vector( maxs.x, maxs.y, maxs.z ),
-                Vector( mins.x, maxs.y, maxs.z ),
-                Vector( mins.x, mins.y, maxs.z ),
-                Vector( maxs.x, mins.y, maxs.z ),
-
-                Vector( (mins.x + maxs.x) * 0.5, mins.y, mins.z ),
-                Vector( (mins.x + maxs.x) * 0.5, maxs.y, mins.z ),
-                Vector( mins.x, (mins.y + maxs.y) * 0.5, mins.z ),
-                Vector( maxs.x, (mins.y + maxs.y) * 0.5, mins.z ),
-                Vector( (mins.x + maxs.x) * 0.5, (mins.y + maxs.y) * 0.5, mins.z ),
-                Vector( (mins.x + maxs.x) * 0.5, (mins.y + maxs.y) * 0.5, maxs.z ),
-
-                Vector( mins.x, mins.y, (mins.z + maxs.z) * 0.5 ),
-                Vector( mins.x, maxs.y, (mins.z + maxs.z) * 0.5 ),
-                Vector( maxs.x, maxs.y, (mins.z + maxs.z) * 0.5 ),
-                Vector( maxs.x, mins.y, (mins.z + maxs.z) * 0.5 )
-            }
-
-            for i = 1, #points do
-                points[ i ]:Rotate( ang )
-                points[ i ] = points[ i ] + bonepos
-
-                if i == 1 then continue end
-
-                local scale = math_Clamp(
-                    scale_min + (scale_max - scale_min) * ((i-2) / (#points-2)),
-                    scale_min,
-                    scale_max
+        if use_multipoint then
+            local center = (mins + maxs) * 0.5
+            local half_size = (maxs - mins) * 0.5
+            local points = {}
+            
+            local scale_range = scale_max - scale_min
+            local points_count = #multipoint_offsets - 1
+            
+            for j = 1, #multipoint_offsets do
+                local offset = multipoint_offsets[j]
+                local point = Vector(
+                    center.x + offset.x * half_size.x,
+                    center.y + offset.y * half_size.y,
+                    center.z + offset.z * half_size.z
                 )
-
-                points[i] = ((points[i] - points[1]) * scale) + points[1]
+                
+                point:Rotate(ang)
+                point = point + bonepos
+                
+                if j > 1 then
+                    local scale = scale_min + scale_range * ((j-2) / points_count)
+                    local center_world = center + bonepos
+                    center_world:Rotate(ang)
+                    point = ((point - center_world) * scale) + center_world
+                end
+                
+                points[j] = point
             end
 
             return points
@@ -5737,7 +5666,7 @@ end
 function ultimate.IsTickHittable( ply, cmd, tick )
     if ded.GetLatency(0) > 1 then return false end
 
-    local serverArriveTick = ded.GetServerTime() + ded.GetLatency(0) + ded.GetLatency(1)
+    local serverArriveTick = ded.GetServerTime(cmd) + ded.GetLatency(0) + ded.GetLatency(1)
     local diff = serverArriveTick - ultimate.btrecords[ ply ][ tick ].simulationtime
 
     if diff > ultimate.cfg.vars["Backtrack time"] / 1000 then return false end
@@ -6914,9 +6843,9 @@ function ultimate.Aim(cmd)
 
     if backtracking then
         targetTime = ultimate.btrecords[ply][bttick].simulationtime
-        timeOffset = ded.GetServerTime() - targetTime
+        timeOffset = ded.GetServerTime(cmd) - targetTime
 
-        serverArriveTick = ded.GetServerTime() + ded.GetLatency(0) + ded.GetLatency(1)
+        serverArriveTick = ded.GetServerTime(cmd) + ded.GetLatency(0) + ded.GetLatency(1)
         diff = serverArriveTick - ultimate.btrecords[ply][bttick].simulationtime
 
         if diff < 0.2 then
@@ -6926,8 +6855,8 @@ function ultimate.Aim(cmd)
             ded.SetCommandTick(cmd, tick)
         else
             ded.NetSetConVar("cl_interpolate","1")
-            ded.NetSetConVar("cl_interp",tostring(ded.GetServerTime() - targetTime))
-            local tick = ultimate.TIME_TO_TICKS(ded.GetServerTime())
+            ded.NetSetConVar("cl_interp",tostring(ded.GetServerTime(cmd) - targetTime))
+            local tick = ultimate.TIME_TO_TICKS(ded.GetServerTime(cmd))
             ded.SetCommandTick(cmd, tick - 1)
         end
     elseif ultimate.cfg.vars["Adjust tickcount"] and not backtracking then
@@ -12220,100 +12149,436 @@ gameevent.Listen( "player_activate" )
 gameevent.Listen( "entity_killed" )
 
 -- ============================================
--- ДАННЫЕ
+-- DOTA 2 KILLSTREAK SYSTEM
 -- ============================================
+
+ultimate.killstreak = 0
+ultimate.killstreak_notifications = {}
+ultimate.killstreak_time = 0
+
+-- Dota 2 правильный порядок киллстриков
 ultimate.killstreak_data = {
-    [2]  = {
-        main = "ДВОЙНОЙ КИЛЛ!",
-        sub  = nil,
-        mainColor = Color(100, 200, 255),
+    [1] = {
+        text = "FIRST BLOOD",
+        sound = "killstreak/firstblood.mp3",
+        color = Color(255, 50, 50, 255),
+        glow = Color(255, 0, 0, 100),
+        scale = 1.3,
+        duration = 3.0
+    },
+    [2] = {
+        text = "DOUBLE KILL",
         sound = "killstreak/doublekill.mp3",
-        shake = false,
+        color = Color(255, 120, 0, 255),
+        glow = Color(255, 100, 0, 100),
+        scale = 1.35,
+        duration = 3.0
     },
-    [3]  = {
-        main = "ТРОЙНОЙ КИЛЛ!",
-        sub  = "%s совершает серию киллов!",
-        mainColor = Color(100, 255, 150),
+    [3] = {
+        text = "TRIPLE KILL",
         sound = "killstreak/triplekill.mp3",
-        shake = false,
+        color = Color(255, 180, 0, 255),
+        glow = Color(255, 150, 0, 100),
+        scale = 1.4,
+        duration = 3.0
     },
-    [4]  = {
-        main = "УЛЬТРА-КИЛЛ!",
-        sub  = "%s доминирует!",
-        mainColor = Color(255, 200, 50),
+    [4] = {
+        text = "ULTRA KILL",
         sound = "killstreak/ultrakill.mp3",
-        shake = false,
+        color = Color(200, 0, 255, 255),
+        glow = Color(180, 0, 255, 100),
+        scale = 1.45,
+        duration = 3.5
     },
-    [5]  = {
-        main = "Б У Й С Т В О !",
-        sub  = "%s совершает мега-килл!",
-        mainColor = Color(255, 50, 50),
+    [5] = {
+        text = "RAMPAGE",
         sound = "killstreak/rampage.mp3",
-        shake = true,
+        color = Color(255, 0, 0, 255),
+        glow = Color(255, 0, 50, 150),
+        scale = 1.6,
+        duration = 4.0
     },
-    [6]  = {
-        main = "KILLING SPREE!",
-        sub  = "%s просто неудержим!",
-        mainColor = Color(255, 150, 0),
+    [6] = {
+        text = "KILLING SPREE",
         sound = "killstreak/killingspree.mp3",
-        shake = false,
+        color = Color(0, 200, 255, 255),
+        glow = Color(0, 150, 255, 100),
+        scale = 1.4,
+        duration = 3.0
     },
-    [7]  = {
-        main = "DOMINATING!",
-        sub  = "%s сеет смерть!",
-        mainColor = Color(255, 100, 0),
+    [7] = {
+        text = "DOMINATING",
         sound = "killstreak/dominating.mp3",
-        shake = false,
+        color = Color(0, 255, 150, 255),
+        glow = Color(0, 255, 100, 100),
+        scale = 1.45,
+        duration = 3.0
     },
-    [8]  = {
-        main = "MEGA KILL!",
-        sub  = "%s совершает монстр-килл!",
-        mainColor = Color(255, 50, 50),
+    [8] = {
+        text = "MEGA KILL",
         sound = "killstreak/megakill.mp3",
-        shake = false,
+        color = Color(255, 50, 100, 255),
+        glow = Color(255, 0, 80, 120),
+        scale = 1.5,
+        duration = 3.5
     },
-    [9]  = {
-        main = "UNSTOPPABLE!",
-        sub  = "%s превосходит богов!",
-        mainColor = Color(200, 0, 100),
+    [9] = {
+        text = "UNSTOPPABLE",
         sound = "killstreak/unstoppable.mp3",
-        shake = false,
+        color = Color(255, 0, 200, 255),
+        glow = Color(200, 0, 255, 120),
+        scale = 1.5,
+        duration = 3.5
     },
     [10] = {
-        main = "GODLIKE!",
-        sub  = "%s превосходит богов! Когда же это закончится?!",
-        mainColor = Color(0, 255, 255),
-        sound = "killstreak/godlike.mp3",
-        shake = false,
+        text = "WICKED SICK",
+        sound = "killstreak/wickedsick.mp3",
+        color = Color(150, 0, 255, 255),
+        glow = Color(120, 0, 255, 130),
+        scale = 1.55,
+        duration = 3.5
     },
+    [11] = {
+        text = "MONSTER KILL",
+        sound = "killstreak/monsterkill.mp3",
+        color = Color(255, 0, 0, 255),
+        glow = Color(255, 0, 0, 140),
+        scale = 1.6,
+        duration = 4.0
+    },
+    [12] = {
+        text = "GODLIKE",
+        sound = "killstreak/godlike.mp3",
+        color = Color(255, 215, 0, 255),
+        glow = Color(255, 200, 0, 150),
+        scale = 1.7,
+        duration = 4.0
+    },
+    [13] = {
+        text = "BEYOND GODLIKE",
+        sound = "killstreak/holyshit.mp3",
+        color = Color(255, 255, 255, 255),
+        glow = Color(255, 200, 50, 180),
+        scale = 1.8,
+        duration = 5.0
+    }
 }
 
 -- ============================================
--- УВЕДОМЛЕНИЯ
+-- АНИМАЦИЯ УВЕДОМЛЕНИЙ (DOTA 2 STYLE)
 -- ============================================
-ultimate.killstreak_notifications = {}
-ultimate.multikill_count = 0
-ultimate.multikill_time  = 0
 
-function ultimate.AddKillstreakNotification(ksdata, victimNick)
-    ultimate.killstreak_notifications = {}
+local killstreak_active = {}
 
-    local sub = ksdata.sub
-    if sub and victimNick then
-        sub = sub:format(victimNick)
+function ultimate.AddKillstreakNotification(streak_data)
+    local notification = {
+        text = streak_data.text,
+        color = streak_data.color,
+        glow = streak_data.glow,
+        scale = streak_data.scale,
+        duration = streak_data.duration,
+        start_time = CurTime(),
+        alpha = 0,
+        y_offset = -80,
+        shake = 0,
+        particles = {},
+        flash_alpha = 255
+    }
+
+    -- Генерация частиц
+    for i = 1, 30 do
+        table.insert(notification.particles, {
+            x = math.random(-400, 400),
+            y = math.random(-60, 60),
+            vx = math.random(-200, 200),
+            vy = math.random(-150, 50),
+            size = math.random(2, 6),
+            alpha = 255,
+            color = Color(
+                streak_data.color.r + math.random(-30, 30),
+                streak_data.color.g + math.random(-30, 30),
+                streak_data.color.b + math.random(-30, 30),
+                255
+            ),
+            lifetime = math.random() * 1.5 + 0.5
+        })
     end
 
-    table.insert(ultimate.killstreak_notifications, {
-        main      = ksdata.main,
-        sub       = sub,
-        mainColor = ksdata.mainColor,
-        startTime = CurTime(),
-        duration  = 3.5,
-        alpha     = 0,
-        scale     = 0.5,
-        shake     = ksdata.shake or false,
-    })
+    table.insert(killstreak_active, notification)
 end
+
+-- Шрифты
+surface.CreateFont("KillstreakFont_Large", {
+    font = "Arial Black",
+    size = 52,
+    weight = 900,
+    antialias = true,
+    shadow = true,
+    outline = false
+})
+
+surface.CreateFont("KillstreakFont_Glow", {
+    font = "Arial Black",
+    size = 56,
+    weight = 900,
+    antialias = true,
+    blursize = 8,
+    shadow = false
+})
+
+surface.CreateFont("KillstreakFont_Glow2", {
+    font = "Arial Black",
+    size = 58,
+    weight = 900,
+    antialias = true,
+    blursize = 16,
+    shadow = false
+})
+
+surface.CreateFont("KillstreakFont_Streak", {
+    font = "Arial",
+    size = 22,
+    weight = 700,
+    antialias = true,
+    shadow = true
+})
+
+hook.Add("HUDPaint", "ultimate_killstreak_hud", function()
+    local scrw = ScrW()
+    local scrh = ScrH()
+    local ct = CurTime()
+
+    for i = #killstreak_active, 1, -1 do
+        local notif = killstreak_active[i]
+        local elapsed = ct - notif.start_time
+        local duration = notif.duration
+        local progress = elapsed / duration
+
+        if elapsed > duration then
+            table.remove(killstreak_active, i)
+            continue
+        end
+
+        -- ============================================
+        -- ФАЗЫ АНИМАЦИИ
+        -- ============================================
+        local phase_in = 0.15        -- Быстрое появление
+        local phase_hold = 0.65      -- Удержание
+        local phase_out = 0.20       -- Плавное исчезновение
+
+        local alpha = 255
+        local scale_mult = 1
+        local y_offset = 0
+        local shake_x = 0
+        local shake_y = 0
+
+        if progress < phase_in then
+            -- ВХОД: быстрое увеличение + тряска
+            local t = progress / phase_in
+            local ease = 1 - math.pow(1 - t, 3) -- ease out cubic
+
+            alpha = 255 * ease
+            scale_mult = 0.3 + 0.7 * ease + (1 - ease) * 0.5
+            y_offset = -60 * (1 - ease)
+
+            -- Тряска при появлении
+            local shake_intensity = (1 - t) * 8
+            shake_x = math.sin(ct * 60) * shake_intensity
+            shake_y = math.cos(ct * 45) * shake_intensity
+
+        elseif progress < (phase_in + phase_hold) then
+            -- УДЕРЖАНИЕ: лёгкое покачивание
+            local hold_t = (progress - phase_in) / phase_hold
+            alpha = 255
+            scale_mult = 1 + math.sin(hold_t * math.pi * 2) * 0.02
+            y_offset = math.sin(hold_t * math.pi * 3) * 2
+
+        else
+            -- ВЫХОД: плавное исчезновение вверх
+            local t = (progress - phase_in - phase_hold) / phase_out
+            local ease = t * t -- ease in quad
+
+            alpha = 255 * (1 - ease)
+            y_offset = -40 * ease
+            scale_mult = 1 - ease * 0.2
+        end
+
+        local cx = scrw / 2 + shake_x
+        local cy = 120 + y_offset + shake_y
+        local final_scale = notif.scale * scale_mult
+
+        -- ============================================
+        -- ВСПЫШКА ЭКРАНА ПРИ ПОЯВЛЕНИИ
+        -- ============================================
+        if progress < 0.1 then
+            local flash_a = (1 - progress / 0.1) * 30
+            surface.SetDrawColor(notif.color.r, notif.color.g, notif.color.b, flash_a)
+            surface.DrawRect(0, 0, scrw, scrh)
+        end
+
+        -- ============================================
+        -- ФОНОВАЯ ПОЛОСА (DOTA STYLE)
+        -- ============================================
+        local bar_width = 600
+        local bar_height = 70
+        local bar_alpha = alpha * 0.6
+
+        -- Анимация ширины полосы
+        local bar_scale = 1
+        if progress < phase_in then
+            bar_scale = (progress / phase_in)
+            bar_scale = 1 - math.pow(1 - bar_scale, 3)
+        elseif progress > (phase_in + phase_hold) then
+            local t = (progress - phase_in - phase_hold) / phase_out
+            bar_scale = 1 - t
+        end
+
+        local actual_bar_w = bar_width * bar_scale
+        local bar_x = cx - actual_bar_w / 2
+        local bar_y = cy - bar_height / 2
+
+        -- Тёмный фон
+        surface.SetDrawColor(0, 0, 0, bar_alpha * 0.7)
+        surface.DrawRect(bar_x, bar_y, actual_bar_w, bar_height)
+
+        -- Цветная линия сверху
+        surface.SetDrawColor(notif.color.r, notif.color.g, notif.color.b, bar_alpha)
+        surface.DrawRect(bar_x, bar_y, actual_bar_w, 3)
+
+        -- Цветная линия снизу
+        surface.SetDrawColor(notif.color.r, notif.color.g, notif.color.b, bar_alpha * 0.5)
+        surface.DrawRect(bar_x, bar_y + bar_height - 2, actual_bar_w, 2)
+
+        -- Градиентные края
+        local grad_w = 60
+        surface.SetDrawColor(0, 0, 0, 0)
+
+        -- Боковое свечение
+        for g = 0, grad_w do
+            local ga = (1 - g / grad_w) * bar_alpha * 0.3
+            surface.SetDrawColor(notif.color.r, notif.color.g, notif.color.b, ga)
+            surface.DrawRect(bar_x - g, bar_y, 1, bar_height)
+            surface.DrawRect(bar_x + actual_bar_w + g, bar_y, 1, bar_height)
+        end
+
+        -- ============================================
+        -- ЧАСТИЦЫ
+        -- ============================================
+        for _, p in ipairs(notif.particles) do
+            local p_life = elapsed / p.lifetime
+            if p_life > 1 then continue end
+
+            local px = cx + p.x + p.vx * elapsed
+            local py = cy + p.y + p.vy * elapsed
+            local pa = p.alpha * (1 - p_life) * (alpha / 255)
+            local ps = p.size * (1 - p_life * 0.5)
+
+            surface.SetDrawColor(p.color.r, p.color.g, p.color.b, pa)
+            surface.DrawRect(px - ps / 2, py - ps / 2, ps, ps)
+        end
+
+        -- ============================================
+        -- ТЕКСТ С СВЕЧЕНИЕМ (DOTA 2 STYLE)
+        -- ============================================
+
+        -- Внешнее свечение (большое)
+        draw.SimpleText(
+            notif.text,
+            "KillstreakFont_Glow2",
+            cx, cy,
+            Color(notif.glow.r, notif.glow.g, notif.glow.b, alpha * 0.3),
+            TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+        )
+
+        -- Среднее свечение
+        draw.SimpleText(
+            notif.text,
+            "KillstreakFont_Glow",
+            cx, cy,
+            Color(notif.glow.r, notif.glow.g, notif.glow.b, alpha * 0.5),
+            TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+        )
+
+        -- Тень текста
+        draw.SimpleText(
+            notif.text,
+            "KillstreakFont_Large",
+            cx + 2, cy + 2,
+            Color(0, 0, 0, alpha * 0.8),
+            TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+        )
+
+        -- Основной текст
+        draw.SimpleText(
+            notif.text,
+            "KillstreakFont_Large",
+            cx, cy,
+            Color(notif.color.r, notif.color.g, notif.color.b, alpha),
+            TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+        )
+
+        -- Белый блик на тексте (при появлении)
+        if progress < 0.3 then
+            local highlight_a = (1 - progress / 0.3) * 150
+            draw.SimpleText(
+                notif.text,
+                "KillstreakFont_Large",
+                cx, cy,
+                Color(255, 255, 255, highlight_a * (alpha / 255)),
+                TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+            )
+        end
+
+        -- ============================================
+        -- СЧЁТЧИК УБИЙСТВ
+        -- ============================================
+        local streak_text = ultimate.killstreak .. " KILLS"
+        local streak_alpha = alpha * 0.8
+        local streak_y = cy + 35
+
+        draw.SimpleText(
+            streak_text,
+            "KillstreakFont_Streak",
+            cx + 1, streak_y + 1,
+            Color(0, 0, 0, streak_alpha),
+            TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+        )
+
+        draw.SimpleText(
+            streak_text,
+            "KillstreakFont_Streak",
+            cx, streak_y,
+            Color(220, 220, 220, streak_alpha),
+            TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+        )
+
+        -- ============================================
+        -- ДЕКОРАТИВНЫЕ ЛИНИИ ПО БОКАМ
+        -- ============================================
+        local line_len = 80 * bar_scale
+        local line_y = cy
+
+        -- Левая линия
+        surface.SetDrawColor(notif.color.r, notif.color.g, notif.color.b, alpha * 0.6)
+        surface.DrawRect(cx - actual_bar_w / 2 - line_len - 10, line_y - 1, line_len, 2)
+
+        -- Правая линия
+        surface.DrawRect(cx + actual_bar_w / 2 + 10, line_y - 1, line_len, 2)
+
+        -- Ромбики на концах линий
+        local diamond_size = 4
+        local dl_x = cx - actual_bar_w / 2 - line_len - 10 - diamond_size
+        local dr_x = cx + actual_bar_w / 2 + 10 + line_len
+
+        surface.SetDrawColor(notif.color.r, notif.color.g, notif.color.b, alpha * 0.8)
+        surface.DrawRect(dl_x, line_y - diamond_size, diamond_size * 2, diamond_size * 2)
+        surface.DrawRect(dr_x, line_y - diamond_size, diamond_size * 2, diamond_size * 2)
+    end
+end)
+
+-- ============================================
+-- ОСНОВНАЯ ЛОГИКА КИЛЛСТРИКОВ
+-- ============================================
 
 function ultimate.entity_killed(data)
     local aid = Entity(data.entindex_attacker)
@@ -12321,48 +12586,77 @@ function ultimate.entity_killed(data)
 
     if aid == me and aid ~= vid and !vid:IsNPC() and (vid:IsPlayer() or vid:IsBot()) then
 
-        ultimate.killstreak = (ultimate.killstreak or 0) + 1
-        
-        SwitchAAOnHit()
+        ultimate.killstreak = ultimate.killstreak + 1
 
-        local now = CurTime()
-        if now - (ultimate.multikill_time or 0) < 18 then
-            ultimate.multikill_count = (ultimate.multikill_count or 0) + 1
-        else
-            ultimate.multikill_count = 1
-        end
-        ultimate.multikill_time = now
-
+        -- ============================================
+        -- KILLSAY
+        -- ============================================
         if ultimate.cfg.vars["Killsay"] then
-            local chatPrefixes = { [2] = "/ooc ", [3] = "/ad " }
-            local prefix = chatPrefixes[ultimate.cfg.vars["Killsay group"]] or ""
+            local chatPrefixes = {
+                [2] = "/ooc ",
+                [3] = "/ad "
+            }
+
+            local chatGroup = ultimate.cfg.vars["Killsay group"]
+            local prefix = chatPrefixes[chatGroup] or ""
+
             local tbl = ultimate.chatmsg[ultimate.cfg.vars["Killsay mode"]]
             local str = prefix .. tbl[math_random(1, #tbl)]
+
             if str:find("%s") then str = str:format(vid:Nick()) end
+
             gRunCmd("say", str)
         end
 
-        -- KILLSOUND
+        -- ============================================
+        -- CUSTOM KILLSOUND
+        -- ============================================
         if ultimate.cfg.vars["Killsound"] then
             surface_PlaySound(ultimate.cfg.vars["Killsound str"])
         end
 
-        -- KILLSTREAK
+        -- ============================================
+        -- DOTA 2 KILLSTREAK SYSTEM
+        -- ============================================
         if ultimate.cfg.vars["Killstreak"] then
-            local mk = ultimate.multikill_count
-            local ks = ultimate.killstreak
-            local ksdata = nil
+            local streak = ultimate.killstreak
+            local data = nil
 
-            if mk >= 2 and mk <= 5 then
-                ksdata = ultimate.killstreak_data[mk]
-            elseif ks >= 3 then
-                local idx = math.min(ks, 10)
-                ksdata = ultimate.killstreak_data[idx]
+            -- Dota 2 правильный порядок
+            if streak == 1 then
+                data = ultimate.killstreak_data[1]   -- FIRST BLOOD
+            elseif streak == 2 then
+                data = ultimate.killstreak_data[2]   -- DOUBLE KILL
+            elseif streak == 3 then
+                data = ultimate.killstreak_data[3]   -- TRIPLE KILL
+            elseif streak == 4 then
+                data = ultimate.killstreak_data[4]   -- ULTRA KILL
+            elseif streak == 5 then
+                data = ultimate.killstreak_data[5]   -- RAMPAGE
+            elseif streak == 6 then
+                data = ultimate.killstreak_data[6]   -- KILLING SPREE
+            elseif streak == 7 then
+                data = ultimate.killstreak_data[7]   -- DOMINATING
+            elseif streak == 8 then
+                data = ultimate.killstreak_data[8]   -- MEGA KILL
+            elseif streak == 9 then
+                data = ultimate.killstreak_data[9]   -- UNSTOPPABLE
+            elseif streak == 10 then
+                data = ultimate.killstreak_data[10]  -- WICKED SICK
+            elseif streak == 11 then
+                data = ultimate.killstreak_data[11]  -- MONSTER KILL
+            elseif streak == 12 then
+                data = ultimate.killstreak_data[12]  -- GODLIKE
+            elseif streak >= 13 then
+                data = ultimate.killstreak_data[13]  -- BEYOND GODLIKE (повторяется)
             end
 
-            if ksdata then
-                surface.PlaySound(ksdata.sound)
-                ultimate.AddKillstreakNotification(ksdata, me:Nick())
+            if data then
+                -- Воспроизводим звук
+                surface.PlaySound(data.sound)
+
+                -- Добавляем визуальное уведомление
+                ultimate.AddKillstreakNotification(data)
             end
         end
 
@@ -12370,128 +12664,34 @@ function ultimate.entity_killed(data)
 end
 
 -- ============================================
--- СБРОС
+-- СБРОС КИЛЛСТРИКА ПРИ СМЕРТИ
 -- ============================================
 hook.Add("entity_killed", "ultimate_reset_killstreak", function(data)
     local vid = Entity(data.entindex_killed)
+
     if vid == me then
-        ultimate.killstreak       = 0
-        ultimate.multikill_count  = 0
-        ultimate.multikill_time   = 0
-        ultimate.killstreak_notifications = {}
-    end
-end)
-
-hook.Add("Think", "ultimate_multikill_reset", function()
-    if CurTime() - (ultimate.multikill_time or 0) > 18 then
-        ultimate.multikill_count = 0
+        ultimate.killstreak = 0
     end
 end)
 
 -- ============================================
--- ОТРИСОВКА
+-- СПИСОК ЗВУКОВ ДЛЯ ЗАГРУЗКИ
 -- ============================================
-hook.Add("HUDPaint", "ultimate_draw_killstreak", function()
-    if !ultimate.cfg.vars["Killstreak"] then return end
-    if #ultimate.killstreak_notifications == 0 then return end
-
-    local scrW   = ScrW()
-    local scrH   = ScrH()
-    local centerX = scrW / 2
-
-    -- Самый верх но чуть ниже
-    local topY = scrH * 0.07
-
-    local notif = ultimate.killstreak_notifications[1]
-    if !notif then return end
-
-    local elapsed  = CurTime() - notif.startTime
-    local progress = elapsed / notif.duration
-
-    if progress >= 1 then
-        table.remove(ultimate.killstreak_notifications, 1)
-        return
-    end
-
-    -- Анимация
-    if progress < 0.15 then
-        notif.alpha = Lerp(progress / 0.15, 0, 255)
-        notif.scale = Lerp(progress / 0.15, 0.6, 1.1)
-    elseif progress < 0.22 then
-        notif.scale = Lerp((progress - 0.15) / 0.07, 1.1, 1.0)
-        notif.alpha = 255
-    elseif progress > 0.78 then
-        notif.alpha = Lerp((progress - 0.78) / 0.22, 255, 0)
-        notif.scale = 1.0
-    else
-        notif.alpha = 255
-        notif.scale = 1.0
-    end
-
-    local a     = notif.alpha
-    local mcol  = ColorAlpha(notif.mainColor, a)
-    local scol  = ColorAlpha(Color(220, 220, 220), a)
-    local shcol = ColorAlpha(Color(0, 0, 0), a)
-
-    -- Тряска только рампага первые 1 секунду
-    local shakeX, shakeY = 0, 0
-    if notif.shake and elapsed < 1.0 then
-        local amt = Lerp(elapsed / 1.0, 4, 0)
-        shakeX = math.random(-math.ceil(amt), math.ceil(amt))
-        shakeY = math.random(-math.ceil(amt), math.ceil(amt))
-    end
-
-    -- ============================================
-    -- СНАЧАЛА SUB (сверху)
-    -- ============================================
-    local subH = 0
-    if notif.sub then
-        surface.SetFont("KS_Sub")
-        local sw, sh = surface.GetTextSize(notif.sub)
-        subH = sh
-
-        local sx = centerX - sw / 2
-        local sy = topY
-
-        -- Тень
-        draw.SimpleText(notif.sub, "KS_Sub", sx + 1, sy + 1, shcol, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-        -- Текст
-        draw.SimpleText(notif.sub, "KS_Sub", sx, sy, scol, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-    end
-
-    -- ============================================
-    -- ПОТОМ MAIN (ниже sub)
-    -- ============================================
-    surface.SetFont("KS_Main")
-    local tw, th = surface.GetTextSize(notif.main)
-
-    local gap = notif.sub and 6 or 0
-    local mx  = centerX - tw / 2 + shakeX
-    local my  = topY + subH + gap + shakeY
-
-    -- Тень
-    draw.SimpleText(notif.main, "KS_Main", mx + 2, my + 2, shcol, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-    -- Основной
-    draw.SimpleText(notif.main, "KS_Main", mx, my, mcol, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-
-end)
-
--- ============================================
--- ТЕСТ
--- ============================================
-concommand.Add("ultimate_test_ks", function(ply, cmd, args)
-    local streak = tonumber(args[1]) or 5
-    ultimate.killstreak      = streak
-    ultimate.multikill_count = streak
-
-    local idx = math.min(streak, 10)
-    local d   = ultimate.killstreak_data[idx]
-    if d then
-        ultimate.AddKillstreakNotification(d, "TestPlayer")
-        surface.PlaySound(d.sound)
-    end
-end)
-
+-- Поместите эти файлы в: garrysmod/sound/killstreak/
+--
+-- killstreak/firstblood.mp3     (1 kill)
+-- killstreak/doublekill.mp3     (2 kills)
+-- killstreak/triplekill.mp3     (3 kills)
+-- killstreak/ultrakill.mp3      (4 kills)
+-- killstreak/rampage.mp3        (5 kills)
+-- killstreak/killingspree.mp3   (6 kills)
+-- killstreak/dominating.mp3     (7 kills)
+-- killstreak/megakill.mp3       (8 kills)
+-- killstreak/unstoppable.mp3    (9 kills)
+-- killstreak/wickedsick.mp3     (10 kills)
+-- killstreak/monsterkill.mp3    (11 kills)
+-- killstreak/godlike.mp3        (12 kills)
+-- killstreak/holyshit.mp3       (13+ kills - BEYOND GODLIKE)
 
 function ultimate.updatePlayerVars( data )
     local id = data.userid
@@ -13948,19 +14148,6 @@ ultimate.AddHook( "PrePlayerDraw" )
 ultimate.AddHook( "OnEntityCreated" )
 
 ultimate.AddHook( "entity_killed" )
-
-// AA Switch on hit hook
-function ultimate.EntityTakeDamage(target, dmg)
-    if not IsValid(target) then return end
-    if target != me then return end
-    
-    local attacker = dmg:GetAttacker()
-    if not IsValid(attacker) or not attacker:IsPlayer() then return end
-    
-    SwitchAAOnHit()
-end
-
-ultimate.AddHook( "EntityTakeDamage" )
 ultimate.AddHook( "player_hurt" )
 
 ultimate.AddHook( "SetupWorldFog" )
