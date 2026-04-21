@@ -609,6 +609,7 @@ ultimate.cfg.vars["last update"]                = false
 ultimate.cfg.vars["Disable animations"]         = false
 ultimate.cfg.vars["Bone fix"]                   = false
 ultimate.cfg.vars["Update Client Anim fix"]     = false
+ultimate.cfg.vars["Exploit Fixer"]              = false
 ultimate.cfg.vars["Wait for simtime update"]    = false
 ultimate.cfg.vars["Shoot on enemy fire"]        = false
 ultimate.cfg.vars["Disable interpolation"]      = true
@@ -1309,7 +1310,7 @@ ultimate.cfg.vars["Modelchanger model"] = 1
 ultimate.cfg.vars["Config name"] = "new"
 ultimate.cfg.vars["Selected config"] = 1
 
-ultimate.cfg.vars["Background picture"] = true
+ultimate.cfg.vars["Background picture"] = false
 ultimate.cfg.vars["Background picture1"] = 8
 ultimate.cfg.vars["Background picture2"] = 20
 
@@ -1688,6 +1689,124 @@ do
     end
 end
 
+-- ========================================
+-- GIF Animation Function (from chromeware.cc.lua)
+-- ========================================
+
+local GIF_FRAMES = {
+    "frame_00_delay-0.03s.png",
+    "frame_01_delay-0.04s.png",
+    "frame_02_delay-0.03s.png",
+    "frame_03_delay-0.03s.png",
+    "frame_04_delay-0.04s.png",
+    "frame_05_delay-0.03s.png",
+    "frame_06_delay-0.03s.png",
+    "frame_07_delay-0.04s.png",
+    "frame_08_delay-0.03s.png",
+    "frame_09_delay-0.03s.png",
+    "frame_10_delay-0.04s.png",
+    "frame_11_delay-0.03s.png",
+    "frame_12_delay-0.03s.png",
+    "frame_13_delay-0.04s.png",
+    "frame_14_delay-0.03s.png",
+    "frame_15_delay-0.03s.png",
+    "frame_16_delay-0.04s.png",
+    "frame_17_delay-0.03s.png",
+    "frame_18_delay-0.03s.png",
+    "frame_19_delay-0.04s.png",
+    "frame_20_delay-0.03s.png",
+    "frame_21_delay-0.03s.png",
+    "frame_22_delay-0.04s.png",
+    "frame_23_delay-0.03s.png",
+    "frame_24_delay-0.03s.png",
+    "frame_25_delay-0.04s.png",
+    "frame_26_delay-0.03s.png",
+    "frame_27_delay-0.03s.png",
+    "frame_28_delay-0.04s.png",
+    "frame_29_delay-0.03s.png",
+    "frame_30_delay-0.03s.png",
+    "frame_31_delay-0.04s.png",
+    "frame_32_delay-0.03s.png",
+    "frame_33_delay-0.03s.png",
+    "frame_34_delay-0.04s.png",
+    "frame_35_delay-0.03s.png",
+    "frame_36_delay-0.03s.png",
+    "frame_37_delay-0.04s.png",
+    "frame_38_delay-0.03s.png",
+    "frame_39_delay-0.03s.png",
+    "frame_40_delay-0.04s.png",
+    "frame_41_delay-0.03s.png",
+    "frame_42_delay-0.03s.png",
+    "frame_43_delay-0.04s.png",
+    "frame_44_delay-0.03s.png",
+    "frame_45_delay-0.03s.png",
+    "frame_46_delay-0.04s.png",
+    "frame_47_delay-0.03s.png",
+    "frame_48_delay-0.03s.png",
+    "frame_49_delay-0.04s.png",
+    "frame_50_delay-0.03s.png",
+    "frame_51_delay-0.03s.png",
+    "frame_52_delay-0.04s.png",
+    "frame_53_delay-0.03s.png",
+    "frame_54_delay-0.03s.png",
+    "frame_55_delay-0.04s.png",
+    "frame_56_delay-0.03s.png",
+    "frame_57_delay-0.03s.png",
+    "frame_58_delay-0.04s.png",
+    "frame_59_delay-0.03s.png",
+    "frame_60_delay-0.03s.png",
+    "frame_61_delay-0.04s.png",
+    "frame_62_delay-0.03s.png",
+    "frame_63_delay-0.03s.png",
+    "frame_64_delay-0.04s.png",
+    "frame_65_delay-0.03s.png",
+    "frame_66_delay-0.03s.png",
+    "frame_67_delay-0.04s.png",
+    "frame_68_delay-0.03s.png",
+    "frame_69_delay-0.03s.png",
+    "frame_70_delay-0.04s.png",
+    "frame_71_delay-0.03s.png",
+    "frame_72_delay-0.03s.png",
+    "frame_73_delay-0.04s.png",
+    "frame_74_delay-0.03s.png",
+    "frame_75_delay-0.03s.png",
+    "frame_76_delay-0.04s.png",
+    "frame_77_delay-0.03s.png",
+    "frame_78_delay-0.03s.png",
+    "frame_79_delay-0.04s.png",
+    "frame_80_delay-0.03s.png",
+    "frame_81_delay-0.03s.png",
+    "frame_82_delay-0.04s.png",
+    "frame_83_delay-0.04s.png",
+}
+
+local FRAME_COUNT = #GIF_FRAMES
+local FPS = 30
+
+local anim = {
+    index = 1,
+    nextChange = 0,
+    delay = 1 / FPS
+}
+
+function DrawAnimatedBackground(x, y, w, h)
+    if CurTime() > anim.nextChange then
+        anim.index = anim.index + 1
+        if anim.index > FRAME_COUNT then
+            anim.index = 1
+        end
+        anim.nextChange = CurTime() + anim.delay
+    end
+    
+    local currentFramePath = GIF_FRAMES[anim.index]
+    
+    surface.SetDrawColor(180, 180, 180, 255)
+    surface.SetMaterial(Material(currentFramePath, "noclamp smooth"))
+    surface.DrawTexturedRect(x, y, w, h)
+end
+
+-- ========================================
+
 do
     local PANEL = {}
 
@@ -1797,9 +1916,8 @@ function PANEL:Paint(w, h)
         surface_DrawRect(0, 0, w, h)
 
     else
-
-        surface_SetDrawColor(0, 0, 0, 255)
-        surface_DrawRect(0, 0, w, h)
+        -- Рисуем анимированный GIF фон
+        DrawAnimatedBackground(0, 0, w, h)
     end
 
     surface_SimpleRect(0, 0, w, 25, ultimate.Colors[52])
@@ -3752,6 +3870,7 @@ function ultimate.tabs.Rage()
     ultimate.ui.CheckBox( p, "Disable animations", "Disable animations" )
     //ultimate.ui.CheckBox( p, "Fix bones", "Bone fix", false, false, false, false, function( bval ) ded.EnableBoneFix( bval ) end )
     ultimate.ui.CheckBox( p, "Fix animations", "Update Client Anim fix", false, false, false, false, function( bval ) ded.EnableAnimFix( bval ) end )
+    ultimate.ui.CheckBox( p, "Exploit Fixer", "Exploit Fixer" )
     ultimate.ui.CheckBox( p, "Extrapolation", "Extrapolation", false,false,false, ultimate.spfuncs[546] )
 
 
@@ -3763,6 +3882,14 @@ function ultimate.tabs.Rage()
     ultimate.ui.ComboBox( p, "Pitch mode","Auto Pitch mode",{ "none","(up,down)","(up,up,down,down)","(up,zero,down)","(up,up,zero,zero,down,down)", "default up" })
     ultimate.ui.CheckBox( p, "Taunt resolver", "Taunt resolver" )
 
+    local p = ultimate.itemPanel( "Resolver AI", 3, 215 ):GetItemPanel()
+
+    ultimate.ui.CheckBox( p, "Resolver AI", "Resolver AI" )
+    ultimate.ui.ComboBox( p, "Resolver AI mode", "Resolver AI mode", ultimate.presets["Resolver AI mode"] )
+    ultimate.ui.CheckBox( p, "Show ESP logs", "Resolver AI show logs" )
+    ultimate.ui.CheckBox( p, "Auto switch angle", "Resolver AI auto switch" )
+    ultimate.ui.Slider( p, "Switch delay", "Resolver AI switch delay", 0.1, 2.0, 1 )
+    ultimate.ui.Slider( p, "Max attempts", "Resolver AI max attempts", 1, 10, 0 )
 
     local p = ultimate.itemPanel( "Position adjustment", 3, 215 ):GetItemPanel()
 
@@ -10496,6 +10623,50 @@ function ultimate.DrawESP()
 
             ttbl[pos] = ttbl[pos] + 0.8
         end
+        
+        -- Индикация Exploit Fixer
+        if ultimate.cfg.vars["Exploit Fixer"] and v.exploitData and v.exploitData.isExploiting then
+            local name = "EXPLOITING"
+            local pos = 2 -- Right side
+            local tw, th = surface_GetTextSize(name)
+            
+            surface_SetTextColor(255, 0, 0, 255)
+            surface_SetTextPos(poses[pos]-ultimate.getTextX(v,tw,pos),ultimate.getTextY(MaxY,MinY,th,pos,ttbl[pos]))
+            surface_DrawText(name)
+            
+            -- Показываем количество подозрительных обновлений
+            local suspText = "SUS: " .. math_floor(v.exploitData.suspiciousUpdates)
+            local stw, sth = surface_GetTextSize(suspText)
+            surface_SetTextColor(255, 128, 0, 255)
+            surface_SetTextPos(poses[pos]-ultimate.getTextX(v,stw,pos),ultimate.getTextY(MaxY,MinY,sth,pos,ttbl[pos] + 0.8))
+            surface_DrawText(suspText)
+            
+            ttbl[pos] = ttbl[pos] + 1.6
+            surface_SetTextColor(ultimate.Colors[255])
+            
+            -- Рисуем линию от фейковой к реальной позиции
+            if v.exploitData.realPosition and v.exploitData.correctionActive then
+                local fakePos = v.entity:GetPos() + Vector(0, 0, 40)
+                local realPos = v.exploitData.realPosition + Vector(0, 0, 40)
+                
+                local fakeScreen = fakePos:ToScreen()
+                local realScreen = realPos:ToScreen()
+                
+                if fakeScreen.visible and realScreen.visible then
+                    -- Линия от фейковой к реальной
+                    surface_SetDrawColor(255, 0, 0, 200)
+                    surface_DrawLine(fakeScreen.x, fakeScreen.y, realScreen.x, realScreen.y)
+                    
+                    -- Маркер реальной позиции
+                    surface_SetDrawColor(0, 255, 0, 200)
+                    surface_DrawRect(realScreen.x - 3, realScreen.y - 3, 6, 6)
+                    
+                    -- Маркер фейковой позиции
+                    surface_SetDrawColor(255, 0, 0, 200)
+                    surface_DrawRect(fakeScreen.x - 3, fakeScreen.y - 3, 6, 6)
+                end
+            end
+        end
 
         if ultimate.cfg.vars["Print Distance"] then
             local METERS_TO_UNITS = 51.4285714
@@ -13391,6 +13562,14 @@ do
                 if ultimate.canBacktrack(v) and v != me and v.simtime_updated then
                     ultimate.recordBacktrack(v)
                 end
+                
+                -- Применяем Exploit Fixer
+                if ultimate.cfg.vars["Exploit Fixer"] and v != me then
+                    ultimate.InitExploitFixer(v)
+                    if ultimate.DetectExploit(v) then
+                        ultimate.FixExploitPosition(v)
+                    end
+                end
 
                 if v.break_lc then
                     ultimate.btrecords[ v ] = {}
@@ -13562,6 +13741,224 @@ function ultimate.UpdateAnimation( v )
     end
 
     ded.InvalidateBoneCache( v:EntIndex() )
+end
+
+// Exploit Fixer - исправление эксплоитов с bSendPacket и тиками
+// 
+// Функционал:
+// 1. Детектирует эксплоиты связанные с манипуляцией bSendPacket (фейк лаг, чоки)
+// 2. Обнаруживает аномалии в симтайме и позициях игроков
+// 3. Показывает реальную модель игрока вместо фейковой
+// 4. Визуализирует эксплоитеров в ESP с индикатором "EXPLOITING"
+// 5. Рисует линию от фейковой позиции к реальной
+//
+// Проверки:
+// - Аномальная разница в симтайме
+// - Телепортация (большое расстояние за тик)
+// - Нулевое обновление симтайма при движении (bSendPacket choke)
+// - Резкое изменение скорости
+// - Детекция фейк лага (большие чоки > 14 тиков)
+// - Аномальное поведение анимаций
+// - Break LC (lagcompensation break)
+//
+ultimate.exploitFixer = ultimate.exploitFixer or {}
+
+-- Вспомогательная функция для интерполяции векторов
+local function LerpVector(t, a, b)
+    return Vector(
+        Lerp(t, a.x, b.x),
+        Lerp(t, a.y, b.y),
+        Lerp(t, a.z, b.z)
+    )
+end
+
+function ultimate.InitExploitFixer(ply)
+    if not ply.exploitData then
+        ply.exploitData = {
+            realPosition = ply:GetPos(),
+            lastValidPosition = ply:GetPos(),
+            lastValidSimtime = ded.GetSimulationTime(ply:EntIndex()),
+            ticksWithoutUpdate = 0,
+            suspiciousUpdates = 0,
+            lastVelocity = Vector(0, 0, 0),
+            positionHistory = {},
+            simtimeHistory = {},
+            isExploiting = false,
+            correctionActive = false,
+            lastLogTime = 0  -- Для предотвращения спама в консоль
+        }
+    end
+end
+
+function ultimate.DetectExploit(ply)
+    if not IsValid(ply) or ply == me or not ply:Alive() then return false end
+    if not ply.exploitData then ultimate.InitExploitFixer(ply) end
+    
+    local data = ply.exploitData
+    local curSimtime = ded.GetSimulationTime(ply:EntIndex())
+    local curPos = ply:GetNetworkOrigin()
+    local curVel = ply:GetAbsVelocity()
+    
+    local suspicious = false
+    
+    -- Проверка 1: Аномальная разница в симтайме
+    local simtimeDelta = curSimtime - data.lastValidSimtime
+    if simtimeDelta > 0.5 or simtimeDelta < -0.1 then
+        suspicious = true
+        data.suspiciousUpdates = data.suspiciousUpdates + 1
+    end
+    
+    -- Проверка 2: Телепортация (слишком большое расстояние за тик)
+    local posDelta = curPos:Distance(data.lastValidPosition)
+    local maxDistance = 500 * math.max(simtimeDelta, TickInterval)
+    if posDelta > maxDistance and simtimeDelta > 0 then
+        suspicious = true
+        data.suspiciousUpdates = data.suspiciousUpdates + 2
+    end
+    
+    -- Проверка 3: Нулевое обновление симтайма при движении (bSendPacket choke)
+    if simtimeDelta == 0 and curVel:Length() > 10 then
+        data.ticksWithoutUpdate = data.ticksWithoutUpdate + 1
+        if data.ticksWithoutUpdate > 3 then
+            suspicious = true
+            data.suspiciousUpdates = data.suspiciousUpdates + 1
+        end
+    else
+        data.ticksWithoutUpdate = 0
+    end
+    
+    -- Проверка 4: Резкое изменение скорости
+    local velDelta = (curVel - data.lastVelocity):Length()
+    if velDelta > 1000 and simtimeDelta > 0 then
+        suspicious = true
+        data.suspiciousUpdates = data.suspiciousUpdates + 1
+    end
+    
+    -- Проверка 5: Детекция фейк лага (большие чоки)
+    if ply.flticks and ply.flticks > 14 then
+        suspicious = true
+        data.suspiciousUpdates = data.suspiciousUpdates + 3
+    end
+    
+    -- Проверка 6: Аномальное поведение анимаций
+    if ply.missedanimticks and ply.missedanimticks > 10 then
+        suspicious = true
+        data.suspiciousUpdates = data.suspiciousUpdates + 2
+    end
+    
+    -- Проверка 7: Break LC (lagcompensation break)
+    if ply.break_lc then
+        suspicious = true
+        data.suspiciousUpdates = data.suspiciousUpdates + 2
+    end
+    
+    -- Определяем эксплоит
+    if data.suspiciousUpdates > 5 then
+        if not data.isExploiting then
+            -- Первое обнаружение - логируем
+            if CurTime() - data.lastLogTime > 5 then
+                print("[Exploit Fixer] Обнаружен эксплоит у игрока: " .. ply:Nick())
+                print("[Exploit Fixer] Подозрительных обновлений: " .. math_floor(data.suspiciousUpdates))
+                data.lastLogTime = CurTime()
+            end
+        end
+        data.isExploiting = true
+        data.correctionActive = true
+    elseif data.suspiciousUpdates > 0 then
+        data.suspiciousUpdates = math.max(0, data.suspiciousUpdates - 0.5)
+    end
+    
+    -- Сохраняем историю
+    table_insert(data.positionHistory, curPos)
+    table_insert(data.simtimeHistory, curSimtime)
+    if #data.positionHistory > 10 then
+        table_remove(data.positionHistory, 1)
+        table_remove(data.simtimeHistory, 1)
+    end
+    
+    -- Обновляем валидные данные если не подозрительно
+    if not suspicious then
+        data.lastValidPosition = curPos
+        data.lastValidSimtime = curSimtime
+        data.lastVelocity = curVel
+        
+        if data.suspiciousUpdates <= 2 then
+            data.isExploiting = false
+            data.correctionActive = false
+        end
+    end
+    
+    return data.isExploiting
+end
+
+function ultimate.FixExploitPosition(ply)
+    if not IsValid(ply) or not ply.exploitData or not ply.exploitData.correctionActive then return end
+    
+    local data = ply.exploitData
+    
+    -- Интерполируем реальную позицию на основе истории
+    if #data.positionHistory >= 3 then
+        local avgPos = Vector(0, 0, 0)
+        local validCount = 0
+        
+        for i = 1, #data.positionHistory - 1 do
+            local pos1 = data.positionHistory[i]
+            local pos2 = data.positionHistory[i + 1]
+            local dist = pos1:Distance(pos2)
+            
+            -- Используем только валидные позиции
+            if dist < 300 then
+                avgPos = avgPos + pos2
+                validCount = validCount + 1
+            end
+        end
+        
+        if validCount > 0 then
+            data.realPosition = avgPos / validCount
+        else
+            data.realPosition = data.lastValidPosition
+        end
+    else
+        data.realPosition = data.lastValidPosition
+    end
+    
+    -- Применяем коррекцию к позиции и костям
+    -- Сохраняем оригинальную позицию
+    if not data.originalPosition then
+        data.originalPosition = ply:GetNetworkOrigin()
+    end
+    
+    -- Форсируем обновление костей с корректной позицией
+    ded.InvalidateBoneCache(ply:EntIndex())
+    
+    -- Используем реальную позицию для расчета костей
+    local oldPos = ply:GetPos()
+    
+    -- Интерполируем между текущей и реальной позицией для плавности
+    local lerpFactor = 0.3
+    local correctedPos = LerpVector(lerpFactor, oldPos, data.realPosition)
+    
+    -- Обновляем кости с корректной позицией
+    ply:SetupBones()
+    
+    -- Сохраняем корректную позицию для следующего кадра
+    data.lastCorrectedPosition = correctedPos
+end
+
+function ultimate.ApplyExploitFixer()
+    if not ultimate.cfg.vars["Exploit Fixer"] then return end
+    
+    local plys = player.GetAll()
+    for i = 1, #plys do
+        local ply = plys[i]
+        if ply != me and ply:Alive() then
+            ultimate.InitExploitFixer(ply)
+            
+            if ultimate.DetectExploit(ply) then
+                ultimate.FixExploitPosition(ply)
+            end
+        end
+    end
 end
 
 // AA shit
@@ -14000,3 +14397,294 @@ ultimate.AddHook( "SetupWorldFog" )
 ultimate.AddHook( "SetupSkyboxFog" )
 
 ultimate.AddHook( "CalcMainActivity" )
+
+
+// ============================================
+// RESOLVER AI - Умный резольвер с автоподбором углов
+// ============================================
+
+-- Вспомогательная функция для цвета с альфой
+local function ColorAlpha(col, alpha)
+    return Color(col.r, col.g, col.b, alpha)
+end
+
+ultimate.resolverAI = ultimate.resolverAI or {}
+ultimate.resolverAI.playerData = ultimate.resolverAI.playerData or {}
+
+-- Конфиг для Resolver AI
+ultimate.cfg.vars["Resolver AI"] = false
+ultimate.cfg.vars["Resolver AI mode"] = 1
+ultimate.presets["Resolver AI mode"] = { "Adaptive", "Learning", "Bruteforce+", "Hybrid" }
+ultimate.cfg.vars["Resolver AI show logs"] = true
+ultimate.cfg.vars["Resolver AI auto switch"] = true
+ultimate.cfg.vars["Resolver AI switch delay"] = 0.3
+ultimate.cfg.vars["Resolver AI max attempts"] = 5
+
+-- Углы для подбора
+ultimate.resolverAI.angles = {
+    { name = "Right", yaw = 60, pitch = 0 },
+    { name = "Left", yaw = -60, pitch = 0 },
+    { name = "Back", yaw = 180, pitch = 0 },
+    { name = "Right+", yaw = 90, pitch = 0 },
+    { name = "Left+", yaw = -90, pitch = 0 },
+    { name = "R45", yaw = 45, pitch = 0 },
+    { name = "L45", yaw = -45, pitch = 0 },
+    { name = "R30", yaw = 30, pitch = 0 },
+    { name = "L30", yaw = -30, pitch = 0 },
+    { name = "Zero", yaw = 0, pitch = 0 },
+    { name = "R120", yaw = 120, pitch = 0 },
+    { name = "L120", yaw = -120, pitch = 0 },
+}
+
+-- Инициализация данных игрока
+local function InitPlayerData(ply)
+    local sid = ply:SteamID64()
+    if not ultimate.resolverAI.playerData[sid] then
+        ultimate.resolverAI.playerData[sid] = {
+            currentAngle = 1,
+            lastSwitch = 0,
+            missCount = 0,
+            hitCount = 0,
+            angleStats = {},
+            bestAngle = 1,
+            lastHit = 0,
+            totalShots = 0,
+            mode = "learning",
+            logs = {},
+        }
+        
+        -- Инициализация статистики для каждого угла
+        for i = 1, #ultimate.resolverAI.angles do
+            ultimate.resolverAI.playerData[sid].angleStats[i] = {
+                hits = 0,
+                misses = 0,
+                successRate = 0
+            }
+        end
+    end
+    return ultimate.resolverAI.playerData[sid]
+end
+
+-- Добавление лога
+local function AddLog(ply, text, color)
+    local data = InitPlayerData(ply)
+    local logEntry = {
+        text = text,
+        time = CurTime(),
+        alpha = 255,
+        color = color or Color(255, 255, 255)
+    }
+    table_insert(data.logs, 1, logEntry)
+    
+    -- Ограничиваем количество логов
+    if #data.logs > 5 then
+        table_remove(data.logs)
+    end
+end
+
+-- Выбор следующего угла (адаптивный режим)
+local function SelectNextAngle(ply, data)
+    local mode = ultimate.cfg.vars["Resolver AI mode"]
+    
+    if mode == 1 then -- Adaptive
+        -- Выбираем угол с лучшей статистикой
+        local bestRate = -1
+        local bestIdx = 1
+        
+        for i, stats in pairs(data.angleStats) do
+            if stats.successRate > bestRate then
+                bestRate = stats.successRate
+                bestIdx = i
+            end
+        end
+        
+        -- Если все углы плохие, пробуем случайный
+        if bestRate < 0.3 and data.totalShots > 10 then
+            bestIdx = math_random(1, #ultimate.resolverAI.angles)
+        end
+        
+        return bestIdx
+        
+    elseif mode == 2 then -- Learning
+        -- Обучающийся режим - пробуем все углы по очереди
+        if data.totalShots < #ultimate.resolverAI.angles * 2 then
+            return (data.currentAngle % #ultimate.resolverAI.angles) + 1
+        else
+            -- После обучения используем лучший
+            return data.bestAngle
+        end
+        
+    elseif mode == 3 then -- Bruteforce+
+        -- Улучшенный брутфорс с приоритетом
+        local priority = {1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 11, 12}
+        local idx = (data.missCount % #priority) + 1
+        return priority[idx]
+        
+    elseif mode == 4 then -- Hybrid
+        -- Гибридный: адаптивный + случайность
+        if math_random() < 0.7 then
+            return data.bestAngle
+        else
+            return math_random(1, #ultimate.resolverAI.angles)
+        end
+    end
+    
+    return 1
+end
+
+-- Обновление статистики
+local function UpdateStats(ply, hit)
+    local data = InitPlayerData(ply)
+    local currentIdx = data.currentAngle
+    local stats = data.angleStats[currentIdx]
+    
+    if hit then
+        stats.hits = stats.hits + 1
+        data.hitCount = data.hitCount + 1
+        data.lastHit = CurTime()
+        
+        local angleName = ultimate.resolverAI.angles[currentIdx].name
+        AddLog(ply, "HIT: " .. angleName, Color(0, 255, 0))
+    else
+        stats.misses = stats.misses + 1
+        data.missCount = data.missCount + 1
+        
+        local angleName = ultimate.resolverAI.angles[currentIdx].name
+        AddLog(ply, "MISS: " .. angleName, Color(255, 0, 0))
+    end
+    
+    data.totalShots = data.totalShots + 1
+    
+    -- Пересчитываем процент успеха
+    local total = stats.hits + stats.misses
+    if total > 0 then
+        stats.successRate = stats.hits / total
+    end
+    
+    -- Обновляем лучший угол
+    local bestRate = -1
+    for i, s in pairs(data.angleStats) do
+        if s.successRate > bestRate and (s.hits + s.misses) > 2 then
+            bestRate = s.successRate
+            data.bestAngle = i
+        end
+    end
+    
+    -- Автоматическое переключение при промахе
+    if not hit and ultimate.cfg.vars["Resolver AI auto switch"] then
+        local delay = ultimate.cfg.vars["Resolver AI switch delay"]
+        if CurTime() - data.lastSwitch > delay then
+            data.currentAngle = SelectNextAngle(ply, data)
+            data.lastSwitch = CurTime()
+            
+            local newAngleName = ultimate.resolverAI.angles[data.currentAngle].name
+            AddLog(ply, "Switch: " .. newAngleName, Color(255, 255, 0))
+        end
+    end
+end
+
+-- Получение текущего угла для игрока
+function ultimate.GetResolverAIAngle(ply)
+    if not ultimate.cfg.vars["Resolver AI"] then return nil end
+    if not IsValid(ply) then return nil end
+    
+    local data = InitPlayerData(ply)
+    local angleData = ultimate.resolverAI.angles[data.currentAngle]
+    
+    return angleData.yaw, angleData.pitch
+end
+
+-- Хук на попадание
+hook_Add("EntityTakeDamage", "ResolverAI_Hit", function(target, dmg)
+    if not ultimate.cfg.vars["Resolver AI"] then return end
+    if not IsValid(target) or not target:IsPlayer() then return end
+    
+    local attacker = dmg:GetAttacker()
+    if attacker == me then
+        UpdateStats(target, true)
+    end
+end)
+
+-- Хук на промах (вызывается из основного кода)
+function ultimate.ResolverAI_Miss(ply)
+    if not ultimate.cfg.vars["Resolver AI"] then return end
+    if not IsValid(ply) then return end
+    
+    UpdateStats(ply, false)
+end
+
+-- ESP логи возле игрока
+hook_Add("HUDPaint", "ResolverAI_ESP", function()
+    if not ultimate.cfg.vars["Resolver AI"] then return end
+    if not ultimate.cfg.vars["Resolver AI show logs"] then return end
+    
+    for _, ply in ipairs(player_GetAll()) do
+        if ply == me then continue end
+        if not ply:Alive() then continue end
+        
+        local data = ultimate.resolverAI.playerData[ply:SteamID64()]
+        if not data then continue end
+        
+        local pos = ply:GetPos() + Vector(0, 0, 80)
+        local scrPos = pos:ToScreen()
+        
+        if not scrPos.visible then continue end
+        
+        local x, y = scrPos.x, scrPos.y
+        
+        -- Текущий угол
+        local currentAngle = ultimate.resolverAI.angles[data.currentAngle]
+        local angleText = "Angle: " .. currentAngle.name
+        local stats = data.angleStats[data.currentAngle]
+        local successRate = math_Round(stats.successRate * 100, 1)
+        
+        surface_SetFont("ultimate_font_1")
+        
+        -- Фон
+        local tw, th = surface_GetTextSize(angleText)
+        surface_SimpleRect(x - tw/2 - 4, y - 2, tw + 8, th + 4, Color(0, 0, 0, 180))
+        
+        -- Текст угла
+        surface_SimpleText(x - tw/2, y, angleText, Color(255, 255, 255))
+        y = y + th + 2
+        
+        -- Статистика
+        local statsText = string_format("H:%d M:%d (%.1f%%)", data.hitCount, data.missCount, successRate)
+        tw, th = surface_GetTextSize(statsText)
+        surface_SimpleRect(x - tw/2 - 4, y - 2, tw + 8, th + 4, Color(0, 0, 0, 180))
+        surface_SimpleText(x - tw/2, y, statsText, Color(100, 255, 100))
+        y = y + th + 4
+        
+        -- Логи
+        for i, log in ipairs(data.logs) do
+            if CurTime() - log.time > 3 then
+                log.alpha = math_max(0, log.alpha - 5)
+            end
+            
+            if log.alpha > 0 then
+                local logColor = ColorAlpha(log.color, log.alpha)
+                tw, th = surface_GetTextSize(log.text)
+                surface_SimpleRect(x - tw/2 - 4, y - 2, tw + 8, th + 4, Color(0, 0, 0, log.alpha * 0.7))
+                surface_SimpleText(x - tw/2, y, log.text, logColor)
+                y = y + th + 2
+            end
+        end
+    end
+end)
+
+-- Интеграция с основным резольвером
+hook_Add("CreateMove", "ResolverAI_Apply", function(cmd)
+    if not ultimate.cfg.vars["Resolver AI"] then return end
+    
+    for _, ply in ipairs(player_GetAll()) do
+        if ply == me then continue end
+        if not ply:Alive() then continue end
+        
+        local yaw, pitch = ultimate.GetResolverAIAngle(ply)
+        if yaw then
+            -- Применяем угол к резольверу
+            ply.resolverAI_yaw = yaw
+            ply.resolverAI_pitch = pitch
+        end
+    end
+end)
