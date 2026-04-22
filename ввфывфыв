@@ -5647,7 +5647,7 @@ function ultimate.GetSortedPlayers( mode, selfpred, plypred, vischeck )
         if v == me then continue end
         if not v:Alive() or v:IsDormant() then continue end
         if ultimate.cfg.vars["Ignores-Bots"] and v:IsBot() then continue end 
-        if ultimate.cfg.vars["Ignores-Friends"] and ultimate.cfg.friends[v:SteamID()] then continue end 
+        if ultimate.cfg.vars["Ignores-Friends"] and ultimate.cfg.friends[v:SteamID64()] then continue end
         if ultimate.cfg.vars["Ignores-Steam friends"] and v:GetFriendStatus() == "friend" then continue end 
         if ultimate.cfg.vars["Ignores-Admins"] and v:IsAdmin() then continue end 
         if ultimate.cfg.vars["Ignores-Frozen"] and v:IsFlagSet( FL_FROZEN ) then continue end 
