@@ -14,7 +14,6 @@ local me                                = LocalPlayer()
 local global 		                    = _G //table.Copy( _G )
 
 local gRunCmd                           = global.RunConsoleCommand
-
 local Angle                             = Angle
 local Material                          = Material
 local Vector                            = Vector
@@ -433,6 +432,21 @@ surface_CreateFont( "veranda", { font = "Verdana", size = 12, antialias = false,
 surface_CreateFont( "veranda_s", { font = "Verdana", size = 12, antialias = false, shadow = true } )
 surface_CreateFont( "veranda_scr", { font = "Verdana", size = ScreenScale( 9 ), antialias = false, outline = true } )
 
+surface.CreateFont("Watermark_Bold", {
+    font = "Verdana",
+    size = 12,
+    weight = 500,
+    antialias = true,
+    shadow = true
+})
+
+surface.CreateFont("Watermark_Symbols", {
+    font = "Verdana",
+    size = 14,
+    weight = 500,
+    antialias = true
+})
+
 surface_CreateFont( "ultimate_font_1", {
     font = "Verdana",
     size = 14,
@@ -444,7 +458,8 @@ surface_CreateFont( "ultimate_font_1", {
 surface.CreateFont( "DermaSmall", {
     font = "Comic Sans MS",
     antialias = false,
-    size = 15})
+    size = 14
+})
 
 surface.CreateFont("Watermark_Bold11", {
     font = "Verdana",
@@ -471,11 +486,10 @@ surface.CreateFont("KS_Sub", {
 })
 
 
-surface.CreateFont( "DermaSmall", {	-- текстик
-    font = "Tahoma",
+surface.CreateFont( "DermaSmall", {	
+    font = "Comic Sans MS", 
     antialias = false,
-    size = 12,
-    outline = false
+    size = 15
 } )
 
 surface_CreateFont( "ultimate_font_2", {
@@ -602,6 +616,7 @@ ultimate.cfg.vars["No visual recoil"]           = false
 ultimate.cfg.vars["Norecoil on aimbot"]         = false
 
 ultimate.cfg.vars["Extrapolation"]              = false
+ultimate.cfg.vars["taunt_disabler"]             = false
 ultimate.cfg.vars["Curved extrapolation"]       = false
 ultimate.cfg.vars["Show extrapolation line"]        = false
 ultimate.cfg.vars["DebugOverlay"]               = false
@@ -609,7 +624,6 @@ ultimate.cfg.vars["last update"]                = false
 ultimate.cfg.vars["Disable animations"]         = false
 ultimate.cfg.vars["Bone fix"]                   = false
 ultimate.cfg.vars["Update Client Anim fix"]     = false
-ultimate.cfg.vars["Exploit Fixer"]              = false
 ultimate.cfg.vars["Wait for simtime update"]    = false
 ultimate.cfg.vars["Shoot on enemy fire"]        = false
 ultimate.cfg.vars["Disable interpolation"]      = true
@@ -660,7 +674,6 @@ ultimate.cfg.vars["AutoD distance"]             = 96
 ultimate.cfg.vars["Backtrack"]                  = false
 ultimate.cfg.vars["Always backtrack"]           = false
 ultimate.cfg.vars["Backtrack mode"]             = 1
-ultimate.cfg.vars["Sampling interval"]          = 0
 ultimate.cfg.vars["Backtrack time"]             = 200
 
 ultimate.cfg.vars["Aimbot smoothing"]           = false
@@ -675,6 +688,7 @@ ultimate.cfg.colors["Show FOV"]                 = "255 255 0 255"
 ultimate.cfg.vars["Aimbot snapline"]                   = false
 ultimate.cfg.colors["Aimbot snapline"]                 = "255 128 0 255"
 ultimate.cfg.vars["Aimbot marker"]                   = false
+ultimate.cfg.vars["Aimbot marker mode"]              = 1
 ultimate.cfg.colors["Aimbot marker"]                 = "255 255 255 255"
 
 
@@ -725,21 +739,8 @@ ultimate.cfg.vars["Desync strength"] = 127
 
 ultimate.cfg.vars["Resolver"] = false
 ultimate.cfg.vars["Resolver mode"] = 1
-
-ultimate.cfg.vars["Lower delta Right"] = 57
-ultimate.cfg.vars["Lower delta Left"] = 57
-ultimate.cfg.vars["Lower delta Right add random"] = 0
-ultimate.cfg.vars["Lower delta Left add random"] = 0
-
-
 ultimate.cfg.vars["Pitch resolver"] = false
 ultimate.cfg.vars["Taunt resolver"] = false
-ultimate.cfg.vars["Force head"] = false
-ultimate.cfg.vars["Auto Pitch mode"] = 1
-
-ultimate.cfg.vars["Invert first shot"] = false
-ultimate.cfg.vars["Resolver max misses"] = 2
-
 
 // Tickbase
 ultimate.cfg.vars["Tickbase shift"] = false
@@ -782,30 +783,21 @@ ultimate.cfg.vars["AA switch delay"]           = 0.5
 ultimate.cfg.vars["AA switch presets"]         = {} 
 ultimate.cfg.vars["AA switch logs"]            = false
 
-
-
 ultimate.cfg.vars["Yaw base"]                   = 1
 ultimate.presets["Yaw base"] = { "Viewangles", "At targets" }
 ultimate.cfg.vars["Yaw"]                        = 1
 ultimate.presets["Yaw"] = {
-    -- Базовые (1-5)
     "Backward",
     "Fake Forward",
     "Legit Delta",
     "Sideways",
     "Half Sideways",
-
-    -- Спин и LBY (6-9)
     "Fake Spin",
     "LBY",
     "LBY Breaker",
-
-    -- Свинг (9-11)
     "Sin Sway",
     "Pendulum Sway",
     "Lag Sway",
-
-    -- Jitter (12-18)
     "Fake Jitter",
     "Kappa Jitter",
     "Abu Jitter",
@@ -813,13 +805,9 @@ ultimate.presets["Yaw"] = {
     "Custom",
     "Fast Jitter",
     "Backward Jitter",
-
-    -- Переключения (19-21)
     "Sideways Switch",
     "LBY Jitter",
     "Slow Spin",
-
-    -- Статические (22-29)
     "Fake Static",
     "Down Pitch AA",
     "Up Pitch AA",
@@ -828,35 +816,21 @@ ultimate.presets["Yaw"] = {
     "Backward LBY",
     "Fake LBY",
     "Jitter LBY",
-
-    -- === НОВЫЕ ===
-
-    -- Anti-Resolve (30-31)
     "Anti-Bruteforce",
     "Freestanding",
-
-    -- Хаос (32-33)
     "Chaos Engine",
     "Desync Master",
-
-    -- Адаптивные (34-35)
     "Adaptive AA",
     "Micro Jitter",
-
-    -- Продвинутые (36-39)
     "Flick AA",
     "Zigzag AA",
     "Double Desync",
     "LBY Desync Hybrid",
-
-    -- Экзотические (40-44)
     "Ghost Walk",
     "Resolver Breaker",
     "Spin Desync",
     "Peek AA",
     "Quantum Jitter",
-
-    -- Уникальные (45-50)
     "Heartbeat AA",
     "Matrix AA",
     "Freestand Jitter",
@@ -2012,7 +1986,7 @@ do
         surface_SetDrawColor( ultimate.Colors[54] )
         surface_DrawOutlinedRect( 0, 0, w, h, 1 )
 
-        surface_SetFont( "tbfont" )
+        surface_SetFont( "DermaSmall" )
         surface_SimpleText( 8, 2, self.txt, ultimate.Colors[165] )
 
         surface_SimpleRect( 6, 20, w-12, 1, ultimate.Colors[54] )
@@ -2063,7 +2037,7 @@ do
     local PANEL = {}
 
     function PANEL:Init()
-        self.Label:SetFont("tbfont")
+        self.Label:SetFont("DermaSmall")
         self.Label:SetTextColor(ultimate.Colors[165])
 
         self.Button:SetSize( 18, 18 )
@@ -3702,7 +3676,7 @@ end
 
 function ultimate.tabs.Aimbot()
 
-    local p = ultimate.itemPanel("Main",1,160):GetItemPanel()
+    local p = ultimate.itemPanel("Main",1,140):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "Enable aimbot", "Enable aimbot", false, false, false, false, false, function( p ) ultimate.ui.Binder( "Aim on key", p ) end )
     ultimate.ui.CheckBox( p, "Silent aim", "Silent aim" )
@@ -3710,17 +3684,18 @@ function ultimate.tabs.Aimbot()
     ultimate.ui.CheckBox( p, "Auto fire", "Auto fire", "Automatically fires when targets can be damaged.", false, false, ultimate.spfuncs[2] )
     ultimate.ui.CheckBox( p, "Auto reload", "Auto reload", false, false, false, ultimate.spfuncs[999] )
 
-    local p = ultimate.itemPanel("Legit",1,120):GetItemPanel()
+    local p = ultimate.itemPanel("Legit",1,100):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "Aimbot smoothing", "Aimbot smoothing", false, false, false, ultimate.spfuncs[4] )
     ultimate.ui.CheckBox( p, "Fov limit", "Fov limit", false, false, false, ultimate.spfuncs[5] )
     ultimate.ui.CheckBox( p, "Triggerbot", "Trigger bot", false, true )
 
-    local p = ultimate.itemPanel( "Visualisation", 1, 100 ):GetItemPanel()
+    local p = ultimate.itemPanel( "Visualisation", 1, 140 ):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "FOV Circle", "Show FOV", false, false, true )
     ultimate.ui.CheckBox( p, "Snapline", "Aimbot snapline", false, false, true )
     ultimate.ui.CheckBox( p, "Marker", "Aimbot marker", false, false, true )
+    ultimate.ui.ComboBox( p, "Marker mode", "Aimbot marker mode", { "Square", "Circle" } )
 
     local p = ultimate.itemPanel( "Accuracy", 2, 85 ):GetItemPanel()
 
@@ -3777,26 +3752,36 @@ ultimate.spfuncs[546] = function()
     ultimate.ui.CheckBox( ultimate.ui.SettingsPan, "Show extrapolation line", "Show extrapolation line" )
 end
 
-function ultimate.tabs.Rage()
-    local p = ultimate.itemPanel( "Angles", 1, 245 ):GetItemPanel()
-
-    ultimate.ui.CheckBox( p, "Enable Anti-Aim", "Anti aim", false, true )
+ultimate.spfuncs[950] = function( p )
+	ultimate.ui.CheckBox( p, "Anti Aim", "Anti aim", false, true )
     ultimate.ui.CheckBox( p, "Inverter", "Inverter", false, true )
     ultimate.ui.ComboBox( p, "Yaw base", "Yaw base" )
     ultimate.ui.ComboBox( p, "Yaw", "Yaw" )
     ultimate.ui.ComboBox( p, "Pitch", "Pitch" )
     ultimate.ui.ComboBox( p, "Edge", "Edge", { "Disabled", "Hide", "Show", "Jitter" } )
+end
 
-    local p = ultimate.itemPanel( "Tweaks", 1, 245 ):GetItemPanel()
+ultimate.spfuncs[55040] = function( p )
+    ultimate.ui.CheckBox( p, "AA switch on hit", "AA switch on hit")
+    ultimate.ui.MultiCombo( p, "AA switch presets", ultimate.presets["Yaw"] )	
+    ultimate.ui.Slider( p, "AA switch delay", "AA switch delay", 0, 5, 1 )
+    ultimate.ui.CheckBox( p, "AA switch logs", "AA switch logs" )
+end
+
+function ultimate.tabs.Rage()
+	local function func( p )
+		ultimate.ui.MTButton( p, "AA Switch", ultimate.spfuncs[55040])
+		ultimate.ui.MTButton( p, "Main AA", ultimate.spfuncs[950])
+    end
+
+    ultimate.itemPanelB( "Angles", 1, 245, func )
+
+    local p = ultimate.itemPanel( "Tweaks", 1, 120 ):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "On shot aa", "On shot aa" )
     ultimate.ui.CheckBox( p, "Yaw randomisation", "Yaw randomisation" )
     ultimate.ui.CheckBox( p, "Freestanding", "Freestanding" )
     ultimate.ui.CheckBox( p, "Micromovement", "Micromovement" )
-    ultimate.ui.CheckBox( p, "AA switch on hit", "AA switch on hit" )
-    ultimate.ui.MultiCombo( p, "AA switch presets", ultimate.presets["Yaw"] )
-    ultimate.ui.Slider( p, "AA switch delay", "AA switch delay", 0, 5, 1 )
-    ultimate.ui.CheckBox( p, "AA switch logs", "AA switch logs" )
 
     local p = ultimate.itemPanel( "Custom angles", 1, 400 ):GetItemPanel()
 
@@ -3848,7 +3833,36 @@ function ultimate.tabs.Rage()
     ultimate.ui.Slider( p, "Shift ticks", "Shift ticks", 1, 99, 0, function( val ) ded.SetMinShift(val) end )
     ultimate.ui.Slider( p, "Charge ticks", "Charge ticks", 1, 99, 0, function( val ) ded.SetMaxShift(val) end )
 
-    local p = ultimate.itemPanel( "Sequence", 2, 300 ):GetItemPanel()
+    local p = ultimate.itemPanel( "Desynculator", 2, 95 ):GetItemPanel()
+
+    ultimate.ui.CheckBox( p, "Desynculator manip", "Desynculator manip", false, true )
+    ultimate.ui.Slider( p, "Desync strength", "Desync strength", 1, 127, 0 )
+
+    local p = ultimate.itemPanel( "Player adjustments", 3, 160 ):GetItemPanel()
+
+    ultimate.ui.CheckBox( p, "Interpolation", "Disable interpolation", false, false, false, false, function( bval ) ded.SetInterpolation( bval ) end )
+    ultimate.ui.CheckBox( p, "Sequence interpolation", "Disable Sequence interpolation", false, false, false, false, function( bval ) ded.SetSequenceInterpolation( bval ) end )
+    ultimate.ui.CheckBox( p, "Disable animations", "Disable animations" )
+    ultimate.ui.CheckBox( p, "Disabler Taunts", "taunt_disabler")
+    ultimate.ui.CheckBox( p, "Fix animations", "Update Client Anim fix", false, false, false, false, function( bval ) ded.EnableAnimFix( bval ) end )
+    ultimate.ui.CheckBox( p, "Extrapolation", "Extrapolation", false,false,false, ultimate.spfuncs[546] )
+
+    local p = ultimate.itemPanel( "Resolver", 3, 150 ):GetItemPanel()
+
+    ultimate.ui.CheckBox( p, "Resolver", "Resolver" )
+    ultimate.ui.ComboBox( p, "Resolver mode", "Resolver mode", {"Bruteforce", "Ultimate standart", "Bruteforce Classic" } )
+    ultimate.ui.CheckBox( p, "Pitch resolver", "Pitch resolver" )
+    ultimate.ui.CheckBox( p, "Taunt resolver", "Taunt resolver" )
+
+    local p = ultimate.itemPanel( "Position adjustment", 3, 180 ):GetItemPanel()
+
+    ultimate.ui.CheckBox( p, "Adjust tickcount", "Adjust tickcount" )
+    ultimate.ui.CheckBox( p, "Backtrack", "Backtrack" )
+    ultimate.ui.ComboBox( p, "Backtrack mode", "Backtrack mode", { "Last ticks", "Closest", "Scan" } ) // , "Backshoot"
+    ultimate.ui.Slider( p, "Backtrack time", "Backtrack time", 0, 1000, 0 )
+    ultimate.ui.CheckBox( p, "Always backtrack", "Always backtrack" )
+
+    local p = ultimate.itemPanel( "Sequence", 3, 250 ):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "Sequence manip", "Sequence manip", false, true )
     ultimate.ui.ComboBox( p, "Sequence mode", "Sequence mode", {"Normal","Mega", "Slippery", "Airstuck", "M9K", "Random" } )
@@ -3856,58 +3870,6 @@ function ultimate.tabs.Rage()
     ultimate.ui.Slider( p, "Min sequence", "Sequence min", 1, 5000, 0 )
     ultimate.ui.Slider( p, "Max sequence", "Sequence max", 1, 5000, 0 )
     ultimate.ui.CheckBox( p, "Animation freezer", "Animation freezer", false, true )
-
-    local p = ultimate.itemPanel( "Desynculator", 2, 105 ):GetItemPanel()
-
-    ultimate.ui.CheckBox( p, "Desynculator manip", "Desynculator manip", false, true )
-    //ultimate.ui.ComboBox( p, "Desync mode", "Desync mode", {"Choke","Sequence","Hybrid","Pulse","Adaptive"} )
-    ultimate.ui.Slider( p, "Desync strength", "Desync strength", 1, 127, 0 )
-
-    local p = ultimate.itemPanel( "Player adjustments", 3, 145 ):GetItemPanel()
-
-    ultimate.ui.CheckBox( p, "Interpolation", "Disable interpolation", false, false, false, false, function( bval ) ded.SetInterpolation( bval ) end )
-    ultimate.ui.CheckBox( p, "Sequence interpolation", "Disable Sequence interpolation", false, false, false, false, function( bval ) ded.SetSequenceInterpolation( bval ) end )
-    ultimate.ui.CheckBox( p, "Disable animations", "Disable animations" )
-    //ultimate.ui.CheckBox( p, "Fix bones", "Bone fix", false, false, false, false, function( bval ) ded.EnableBoneFix( bval ) end )
-    ultimate.ui.CheckBox( p, "Fix animations", "Update Client Anim fix", false, false, false, false, function( bval ) ded.EnableAnimFix( bval ) end )
-    ultimate.ui.CheckBox( p, "Exploit Fixer", "Exploit Fixer" )
-    ultimate.ui.CheckBox( p, "Extrapolation", "Extrapolation", false,false,false, ultimate.spfuncs[546] )
-
-
-    local p = ultimate.itemPanel( "Resolver", 3, 185 ):GetItemPanel()
-
-    ultimate.ui.CheckBox( p, "Resolver", "Resolver" )
-    ultimate.ui.ComboBox( p, "Resolver mode", "Resolver mode", {"Bruteforce", "Ultimate standart", "Bruteforce Classic" } )
-    ultimate.ui.CheckBox( p, "Pitch resolver", "Pitch resolver" )
-    ultimate.ui.ComboBox( p, "Pitch mode","Auto Pitch mode",{ "none","(up,down)","(up,up,down,down)","(up,zero,down)","(up,up,zero,zero,down,down)", "default up" })
-    ultimate.ui.CheckBox( p, "Taunt resolver", "Taunt resolver" )
-
-    local p = ultimate.itemPanel( "Resolver AI", 3, 215 ):GetItemPanel()
-
-    ultimate.ui.CheckBox( p, "Resolver AI", "Resolver AI" )
-    ultimate.ui.ComboBox( p, "Resolver AI mode", "Resolver AI mode", ultimate.presets["Resolver AI mode"] )
-    ultimate.ui.CheckBox( p, "Show ESP logs", "Resolver AI show logs" )
-    ultimate.ui.CheckBox( p, "Auto switch angle", "Resolver AI auto switch" )
-    ultimate.ui.Slider( p, "Switch delay", "Resolver AI switch delay", 0.1, 2.0, 1 )
-    ultimate.ui.Slider( p, "Max attempts", "Resolver AI max attempts", 1, 10, 0 )
-
-    local p = ultimate.itemPanel( "Position adjustment", 3, 215 ):GetItemPanel()
-
-    ultimate.ui.CheckBox( p, "Adjust tickcount", "Adjust tickcount" )
-    ultimate.ui.CheckBox( p, "Backtrack", "Backtrack" )
-    ultimate.ui.ComboBox( p, "Backtrack mode", "Backtrack mode", { "Last ticks", "Closest", "Scan" } ) // , "Backshoot"
-    ultimate.ui.Slider( p, "Sampling interval", "Sampling interval", 0, 200, 0 )
-    ultimate.ui.Slider( p, "Backtrack time", "Backtrack time", 0, 1000, 0 )
-    ultimate.ui.CheckBox( p, "Always backtrack", "Always backtrack" )
-
-    local p = ultimate.itemPanel( "Misc", 3, 215 ):GetItemPanel()
-
-    ultimate.ui.CheckBox( p, "Auto detonator", "Auto detonator" )
-    ultimate.ui.Slider( p, "Detonation distance", "AutoD distance", 16, 128, 0 )
-
-
-    ultimate.ui.CheckBox( p, "Gun switch", "Gun switch" )
-
 end
 
 ultimate.spfuncs[2] = function()
@@ -4114,7 +4076,7 @@ end
 ultimate.spfuncs[126] = function()
     ultimate.ui.SettingsPan:SetSize(125,120)
 
-    ultimate.ui.ComboBox( ultimate.ui.SettingsPan,  "Crosshair type", "Crosshair type", {"Default","Box","Small","Sega" } )
+    ultimate.ui.ComboBox( ultimate.ui.SettingsPan,  "Crosshair type", "Crosshair type", {"Default","Box","Small","Sega","AlenX64" } )
     ultimate.ui.Slider( ultimate.ui.SettingsPan,  "Crosshair size", "Crosshair size", 1,30,0 )
 
 end
@@ -4224,7 +4186,7 @@ function ultimate.tabs.Visuals()
     ultimate.ui.CheckBox( p, "Hitmarker", "Hitmarker", false, false, true )
     ultimate.ui.CheckBox( p, "Hitnumbers", "Hitnumbers", false, false, true, false, false, function(p) ultimate.ui.ColorPicker( "Hitnumbers krit", p ) end )
     //ultimate.ui.CheckBox( p, "Hit particles", "Hit particles", false, false, true, ultimate.spfuncs[31] )
-    ultimate.ui.CheckBox( p, "On screen logs", "On screen logs", false, false, true, false, false, function(p) ultimate.ui.ColorPicker( "Miss lagcomp", p ) ultimate.ui.ColorPicker( "Miss spread", p ) ultimate.ui.ColorPicker( "Miss fail", p ) end )
+    ultimate.ui.CheckBox( p, "Event logger", "On screen logs", false, false, true, false, false, function(p) ultimate.ui.ColorPicker( "Miss lagcomp", p ) ultimate.ui.ColorPicker( "Miss spread", p ) ultimate.ui.ColorPicker( "Miss fail", p ) end )
     ultimate.ui.CheckBox( p, "Spectator list", "Spectator list" )
     ultimate.ui.CheckBox( p, "Tickbase", "Tickbase indicator" )
     ultimate.ui.CheckBox( p, "Ultimate indicators", "Ultimate indicators", false, false, true )
@@ -4424,7 +4386,7 @@ function ultimate.tabs.Misc()
     ultimate.ui.CheckBox( p, "Auto teleport back", "Auto peak tp" )
     ultimate.ui.CheckBox( p, "Water walk", "Water jump" )
 
-    local p = ultimate.itemPanel("Key spam",1,220):GetItemPanel()
+    local p = ultimate.itemPanel("Key spam",1,200):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "Use spam", "Use spam" )
     ultimate.ui.CheckBox( p, "Flashlight spam", "Flashlight spam" )
@@ -4441,45 +4403,27 @@ function ultimate.tabs.Misc()
     ultimate.ui.TextEntry( "Sound path", "Hitsound str", p, 420 )
     ultimate.ui.CheckBox( p, "Killsound", "Killsound" )
     ultimate.ui.TextEntry( "Sound path", "Killsound str", p, 420 )
-ultimate.ui.CheckBox(p, "Killstreak", "Killstreak")
+    ultimate.ui.CheckBox(p, "Killstreak", "Killstreak")
 
     local p = ultimate.itemPanel("Chat",2,282):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "Spammer", "Chat spammer" )
-    ultimate.ui.ComboBox( p, "Mode", "Chat mode", {     "Sacred quotes",
-    "Edgy gamer",
-    "Tryhard toxic",
-    "Name based",
-    "Anime weeb",
-    "Meme references",
-    "Gaming roasts" })
+    ultimate.ui.ComboBox( p, "Mode", "Chat mode", {     "Sacred quotes","Edgy gamer","Tryhard toxic","Name based","Anime weeb","Meme references","Gaming roasts" })
     ultimate.ui.ComboBox( p, "Group", "Chat group", { "Default", "OOC", "Advert", "PM", "ULX" })
     ultimate.ui.Slider( p, "Delay", "Chat delay", 0,20,0 )
 
     ultimate.ui.CheckBox( p, "Killsay", "Killsay" )
-    ultimate.ui.ComboBox( p, "Mode", "Killsay mode", {     "Sacred quotes",
-    "Edgy gamer",
-    "Tryhard toxic",
-    "Name based",
-    "Anime weeb",
-    "Meme references",
-    "Gaming roasts" })
+    ultimate.ui.ComboBox( p, "Mode", "Killsay mode", {"Sacred quotes","Edgy gamer","Tryhard toxic","Name based","Anime weeb","Meme references","Gaming roasts" })
     ultimate.ui.ComboBox( p, "Group", "Killsay group", { "Default", "OOC", "Advert", "PM", "ULX" })
 
-    ultimate.itemPanelB( "Net / Cvar", 3, 310, func )
+    ultimate.itemPanelB( "Net / Cvar", 3, 225, func )
 
-    local p = ultimate.itemPanel("Memes",3,250):GetItemPanel()
+    local p = ultimate.itemPanel("Memes",3,200):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "Follow Player", "Ghost follower" )
     ultimate.ui.TextEntry( "Steam ID", "GFID", p, 500 )
     ultimate.ui.CheckBox( p, "Auto Затяг ( Vape )", "Auto Vape" )
     ultimate.ui.CheckBox( p, "Fast lockpick", "Fast lockpick" )
-
-   /*
-        ultimate.checkbox("Safe hop","Safe hop",p:GetItemPanel())
-        ultimate.checkbox("Edge jump","Edge jump",p:GetItemPanel())
-        ultimate.checkbox("Air duck","Air duck",p:GetItemPanel())
-    */
 end
 
 /*
@@ -4505,11 +4449,9 @@ function ultimate.tabs.Config()
     ultimate.ui.TextEntry( "Name", "Config name", p, 64 )
     ultimate.ui.Button( "Create", function() ultimate.CreateConfig() end, p )
 
-    //ultimate.ui.Label( p, "Menu color", function( p ) ultimate.ui.ColorPicker( "Menu color", p, ultimate.updateMenuColor ) end )
+    local p = ultimate.itemPanel("Menu",2,250):GetItemPanel()
 
-              local p = ultimate.itemPanel("Menu",2,250):GetItemPanel()
-
-ultimate.ui.CheckBox( p, "Background picture", "Background picture" )
+    ultimate.ui.CheckBox( p, "Background picture", "Background picture" )
     ultimate.ui.ComboBox( p, "Background", "Background picture1", { "крик", "пила", "сбп", "сиси", "пинтерест", "бегемоты хвх", "читер", "в4" })
     ultimate.ui.Slider( p, "Затемнение", "Background picture2", 1, 20, 1)
 end
@@ -5704,14 +5646,14 @@ function ultimate.GetSortedPlayers( mode, selfpred, plypred, vischeck )
 
         if v == me then continue end
         if not v:Alive() or v:IsDormant() then continue end
-        if ultimate.cfg.vars["Ignores-Bots"] and v:IsBot() then continue end
-        if ultimate.cfg.vars["Ignores-Friends"] and ultimate.cfg.friends[v:SteamID64()] then continue end
-        if ultimate.cfg.vars["Ignores-Steam friends"] and v:GetFriendStatus() == "friend" then continue end
-        if ultimate.cfg.vars["Ignores-Admins"] and v:IsAdmin() then continue end
-        if ultimate.cfg.vars["Ignores-Frozen"] and v:IsFlagSet( FL_FROZEN ) then continue end
-        if ultimate.cfg.vars["Ignores-Nodraw"] and v:IsEffectActive( EF_NODRAW ) then continue end
-        if ultimate.cfg.vars["Ignores-God time"] and v:GetColor().a < 255 then continue end
-        if ultimate.cfg.vars["Ignores-Driver"] and v:InVehicle() then continue end
+        if ultimate.cfg.vars["Ignores-Bots"] and v:IsBot() then continue end 
+        if ultimate.cfg.vars["Ignores-Friends"] and ultimate.cfg.friends[v:SteamID()] then continue end 
+        if ultimate.cfg.vars["Ignores-Steam friends"] and v:GetFriendStatus() == "friend" then continue end 
+        if ultimate.cfg.vars["Ignores-Admins"] and v:IsAdmin() then continue end 
+        if ultimate.cfg.vars["Ignores-Frozen"] and v:IsFlagSet( FL_FROZEN ) then continue end 
+        if ultimate.cfg.vars["Ignores-Nodraw"] and v:IsEffectActive( EF_NODRAW ) then continue end 
+        if ultimate.cfg.vars["Ignores-God time"] and (type(v.HasGodMode) == "function" and v:HasGodMode()) then continue end 
+        if ultimate.cfg.vars["Ignores-Driver"] and v:InVehicle() then continue end 
 
         local iTeamEnemy = ultimate.GetTeam( v )
         if st == TEAM_SPECTATOR or ultimate.cfg.vars["Ignores-Teammates"] and iTeamLocal == iTeamEnemy then continue end
@@ -6370,165 +6312,105 @@ function ultimate.CanStab(ent, pos, health)
 end
 
 function ultimate.PredictVelocityExtrapolate( vel, yaw, fmove, smove, accel, maxspeed )
-
 	local viewangles = Angle( 0, yaw, 0 )
-
 	local forward = viewangles:Forward()
 	local right = viewangles:Right()
-
 	forward.z = 0
 	right.z = 0
-
 	forward:Normalize()
 	right:Normalize()
-
 	local wishdir = Vector( forward.x*fmove + right.x*smove, forward.y*fmove + right.y*smove, 0 )
 	local wishspeed = wishdir:Length()
-
 	wishdir:Normalize()
-
 	if ( wishspeed != 0 && wishspeed > maxspeed ) then
 		wishspeed = maxspeed
 	end
-
 	local wishspd = wishspeed
-
 	if ( wishspd > 30 ) then
 		wishspd = 30
 	end
-
 	local currentspeed = vel:Dot( wishdir )
 	local addspeed = wishspd - currentspeed
-
 	if ( addspeed <= 0 ) then
 		return
 	end
-
 	local accelspeed = accel * wishspeed
-
 	if ( accelspeed > addspeed ) then
 		accelspeed = addspeed
 	end
-
 	local newvel = wishdir * accelspeed
-
 	vel:Add( newvel )
-
 end
 
 function ultimate.FindBestAirAngle( vel_start, vel_end, sim_ticks, accel, maxspeed )
-
     local find_air_angle_step = 0.1
     local find_air_angle_limit = 10
-
     local cl_forwardspeed = 10000
     local cl_sidespeed = 10000
-
     local STRAFE_NONE = 0
     local STRAFE_LEFT = 1
     local STRAFE_RIGHT = 2
     local STRAFE_STRAIGHT = 3
-
 	local strafe_type = STRAFE_NONE
 	local best_angle = 0
-
 	if ( sim_ticks <= 0 || sim_ticks > 24 ) then
 		return strafe_type, best_angle
 	end
-
 	local vel_delta = vel_end - vel_start
 	local vel_delta_len_sqr = vel_delta:Length2DSqr()
-
 	if ( vel_delta_len_sqr < 0.01 ) then
 		return strafe_type, best_angle
 	end
-
 	local vel_yaw_start = math.NormalizeAngle( math.deg( math.atan2( vel_start.y, vel_start.x ) ) )
 	local vel_yaw_end = math.NormalizeAngle( math.deg( math.atan2( vel_end.y, vel_end.x ) ) )
 	local vel_yaw_delta = math.NormalizeAngle( vel_yaw_end - vel_yaw_start )
 	local vel_yaw_avg = math.NormalizeAngle( vel_yaw_start + ( vel_yaw_delta / 2 ) )
-
 	local fmove = 0
 	local smove = ( vel_yaw_delta > 0 ) && -cl_sidespeed || cl_sidespeed
-
 	local strafe_dir = ( vel_yaw_delta > 0 ) && STRAFE_LEFT || STRAFE_RIGHT
 	local angle_step = find_air_angle_step
 	local min_vel_delta_len_sqr = vel_delta_len_sqr
-
 	for i = 1, 2 do
-
 		local angle = 0
-
 		while ( math.abs( angle ) <= find_air_angle_limit ) do
-
 			local pred_vel = vel_start
-
 			for j = 1, sim_ticks do
-
 				local pred_vel_yaw = math.NormalizeAngle( math.deg( math.atan2( pred_vel.y, pred_vel.x ) ) + angle )
-
 				ultimate.PredictVelocityExtrapolate( pred_vel, pred_vel_yaw, fmove, smove, accel, maxspeed )
-
 			end
-
 			vel_delta = vel_end - pred_vel
 			vel_delta_len_sqr = vel_delta:Length2DSqr()
-
 			if ( vel_delta_len_sqr < min_vel_delta_len_sqr ) then
-
 				min_vel_delta_len_sqr = vel_delta_len_sqr
 				strafe_type = strafe_dir
 				best_angle = angle
-
 			end
-
 			angle = angle + angle_step
-
 		end
-
 		angle_step = angle_step * -1
-
 	end
-
 	for i = 1, 2 do
-
 		local angle = 0
-
 		while ( math.abs( angle ) <= find_air_angle_limit ) do
-
 			local pred_vel = vel_start
-
 			for j = 1, sim_ticks do
-
 				local pred_vel_yaw = math.NormalizeAngle( math.deg( math.atan2( pred_vel.y, pred_vel.x ) ) )
 				local pred_vel_yaw_delta = math.NormalizeAngle( vel_yaw_avg + angle - pred_vel_yaw )
 				smove = ( pred_vel_yaw_delta > 0 ) && -cl_sidespeed || cl_sidespeed
-
 				ultimate.PredictVelocityExtrapolate( pred_vel, pred_vel_yaw, fmove, smove, accel, maxspeed )
-
 			end
-
 			vel_delta = vel_end - pred_vel
 			vel_delta_len_sqr = vel_delta:Length2DSqr()
-
 			if ( vel_delta_len_sqr < min_vel_delta_len_sqr ) then
-
 				min_vel_delta_len_sqr = vel_delta_len_sqr
 				strafe_type = STRAFE_STRAIGHT
 				best_angle = vel_yaw_avg + angle
-
 			end
-
 			angle = angle + angle_step
-
 		end
-
 		angle_step = angle_step * -1
-
 	end
-
 	return strafe_type, best_angle
-
 end
 
 local sv_airaccelerate = GetConVar( "sv_airaccelerate" )
@@ -6536,12 +6418,9 @@ local sv_airaccelerate = GetConVar( "sv_airaccelerate" )
 function ultimate.PredictMovementExtrapolate( target_ply, extrapolation_ticks )
     local sv_gravity = GetConVar( "sv_gravity" )
     local sv_sticktoground = GetConVar( "sv_sticktoground" )
-
 	local pm
-
 	local vel_yaw
 	local vel_yaw_delta
-
 	local frametime = TickInterval
 	local maxspeed = target_ply:GetMaxSpeed()
 	local jump_power = target_ply:GetJumpPower()
@@ -6555,10 +6434,8 @@ function ultimate.PredictMovementExtrapolate( target_ply, extrapolation_ticks )
 	local ducking = target_ply:IsFlagSet( FL_DUCKING )
 	local strafe_type = target_ply.m_nStrafeType
 	local angle = target_ply.m_flAirAngle
-
 	local fmove = 0
 	local smove
-
 	if ( strafe_type == STRAFE_LEFT ) then
 		smove = -cl_sidespeed
 	elseif ( strafe_type == STRAFE_RIGHT ) then
@@ -6566,39 +6443,25 @@ function ultimate.PredictMovementExtrapolate( target_ply, extrapolation_ticks )
 	else
 		smove = 0
 	end
-
 	for i = 1, extrapolation_ticks do
-
 		velocity.z = velocity.z - half_gravity
-
 		if ( on_ground ) then
-
 			if ( ducking ) then
 				velocity.z = jump_power
 			else
 				velocity.z = velocity.z + jump_power
 			end
-
 			velocity.z = velocity.z - half_gravity
-
 		end
-
 		if ( strafe_type == STRAFE_STRAIGHT ) then
-
 			vel_yaw = math.NormalizeAngle( math.deg( math.atan2( velocity.y, velocity.x ) ) )
 			vel_yaw_delta = math.NormalizeAngle( angle - vel_yaw )
 			smove = ( vel_yaw_delta > 0 ) && -cl_sidespeed || cl_sidespeed
-
 		else
-
 			vel_yaw = math.NormalizeAngle( math.deg( math.atan2( velocity.y, velocity.x ) ) + angle )
-
 		end
-
 		ultimate.PredictVelocityExtrapolate( velocity, vel_yaw, fmove, smove, accel, maxspeed )
-
 		local endpos = origin + ( velocity * frametime )
-
 		pm = util.TraceHull( {
 			start = origin,
 			endpos = endpos,
@@ -6608,27 +6471,17 @@ function ultimate.PredictMovementExtrapolate( target_ply, extrapolation_ticks )
 			mask = MASK_PLAYERSOLID,
 			collisiongroup = COLLISION_GROUP_PLAYER_MOVEMENT
 		} )
-
 		if ( pm.Fraction != 1 ) then
-
 			local time_left = frametime
-
 			for j = 1, 2 do
-
 				time_left = time_left - ( time_left * pm.Fraction )
-
 				local dot = velocity:Dot( pm.HitNormal )
-
 				velocity = velocity - ( pm.HitNormal * dot )
-
 				dot = velocity:Dot( pm.HitNormal )
-
 				if ( dot < 0 ) then
 					velocity = velocity - ( pm.HitNormal * dot )
 				end
-
 				endpos = pm.HitPos + ( velocity * time_left )
-
 				pm = util.TraceHull( {
 					start = pm.HitPos,
 					endpos = endpos,
@@ -6638,23 +6491,15 @@ function ultimate.PredictMovementExtrapolate( target_ply, extrapolation_ticks )
 					mask = MASK_PLAYERSOLID,
 					collisiongroup = COLLISION_GROUP_PLAYER_MOVEMENT
 				} )
-
 				if ( pm.Fraction == 1 ) then
 					break
 				end
-
 			end
-
 		end
-
 		origin = pm.HitPos
-
 		if ( !stick_to_ground && velocity.z > 140 ) then
-
 			on_ground = false
-
 		else
-
 			pm = util.TraceHull( {
 				start =  Vector( origin.x, origin.y, origin.z + 2 ),
 				endpos = Vector( origin.x, origin.y, origin.z - 1 ),
@@ -6664,28 +6509,21 @@ function ultimate.PredictMovementExtrapolate( target_ply, extrapolation_ticks )
 				mask = MASK_PLAYERSOLID,
 				collisiongroup = COLLISION_GROUP_PLAYER_MOVEMENT
 			} )
-
 			on_ground = ( pm.Entity != NULL && pm.HitNormal.z >= 0.7 )
-
 		end
-
 		if ( on_ground ) then
 			velocity.z = 0
 		else
 			velocity.z = velocity.z - half_gravity
 		end
-
 	end
-
 	return origin
-
 end
 
 local gRustPred = false
 
 function ultimate.Aim(cmd)
     ultimate.AntiAim(cmd)
-
     local tickrate = ultimate.TIME_TO_TICKS(1)
     local latency = ded.GetLatency(0)
     local latency_ticks = ultimate.TIME_TO_TICKS(latency)
@@ -6695,9 +6533,7 @@ function ultimate.Aim(cmd)
         ultimate.fakeAngles.angle = cmd:GetViewAngles()
         ultimate.fakeAngles.movex = me:GetPoseParameter("move_x")
         ultimate.fakeAngles.movey = me:GetPoseParameter("move_y")
-
         local layers = {}
-
         for i = 0, 13 do
             if me:IsValidLayer(i) then
                 layers[i] = {
@@ -6707,7 +6543,6 @@ function ultimate.Aim(cmd)
                 }
             end
         end
-
         ultimate.fakeAngles.origin = me:GetNetworkOrigin()
         ultimate.fakeAngles.seq = me:GetSequence()
         ultimate.fakeAngles.cycle = me:GetCycle()
@@ -6716,34 +6551,23 @@ function ultimate.Aim(cmd)
     end
 
     local ply, bone, aimang, backtracking, bttick = ultimate.SelectTarget(cmd)
-
     local w = me:GetActiveWeapon()
-
     ultimate.targetVector = bone
-
     if not aimang then return end
-
     aimang:Normalize()
-
     if not ultimate.cfg.vars["Enable aimbot"] or not ply then return end
 
     local ent_time = ded.GetSimulationTime( ply:EntIndex() )
     local valid = math.abs( corrected_latency - ( ultimate.TICKS_TO_TIME( engine.TickCount() ) + latency - ent_time ) ) <= 0.2
-
     local oldAimAng = aimang
     local finalAngle = aimang
-
     local ExtrPos = bone
     local Extrapolate = false
-
     local saved_pos = ply:GetPos()
-
     local extrapolated_pos = saved_pos
-
     local nullvelocity = ply:GetVelocity():Length() > 2
 
     if ultimate.cfg.vars["Extrapolation"] and ( !valid || ply.m_bBreaksLagCompensation ) and nullvelocity then
-
         if ply.m_needStrafeCalc and ply.m_nSimulationTicks and ply.m_nSimulationTicks > 0 then
             ply.m_nStrafeType, ply.m_flAirAngle = ultimate.FindBestAirAngle(
                 ply.m_vecOldVelocity,
@@ -6754,18 +6578,15 @@ function ultimate.Aim(cmd)
             )
             ply.m_needStrafeCalc = false
         end
-
         if ( ply.m_nSimulationTicks > 0 ) then
             local delta_ticks = math_max( 0, engine.TickCount() - ply.m_nLastUpdateTick )
             local extrapolation_ticks = math_floor( ( delta_ticks + latency_ticks ) / ply.m_nSimulationTicks ) * ply.m_nSimulationTicks
             if ( extrapolation_ticks >= ply.m_nSimulationTicks && extrapolation_ticks <= tickrate ) then
-
                 if ply.m_nStrafeType != 0 then
                     extrapolated_pos = ultimate.PredictMovementExtrapolate(ply, extrapolation_ticks)
                 else
                     extrapolated_pos = saved_pos + (ply:GetAbsVelocity() * engine.TickInterval() * extrapolation_ticks)
                 end
-
                 ply:SetPos( extrapolated_pos )
                 valid = false
                 Extrapolate = true
@@ -6777,61 +6598,38 @@ function ultimate.Aim(cmd)
     ply:SetupBones()
 
     if ultimate.cfg.vars["Extrapolation"] and Extrapolate and not backtracking then
-
         local bone_index = ultimate.ParseBones( ply, ultimate.cfg.vars["Hitbox selection"] )
-
         local bone_matrix = ply:GetBoneMatrix( ply:GetHitBoxBone( bone_index, ply:GetHitboxSet() ) )
         local mins, maxs = ply:GetHitBoxBounds( bone_index, ply:GetHitboxSet() )
-
         mins = bone_matrix * mins
         maxs = bone_matrix * maxs
-
         local center = (mins + maxs) * 0.5
-
         ExtrPos = center
         finalAngle = (ExtrPos - me:EyePos()):Angle()
         finalAngle:Normalize()
-
         local start = me:GetShootPos()
         local dir = center - start
         dir:Normalize()
         local endpos = start + dir * 8192
-
         ultimate.traceStruct.start = start
         ultimate.traceStruct.endpos = endpos
         ultimate.traceStruct.filter = me
         ultimate.traceStruct.mask = MASK_SHOT
-
         local tr = TraceLine( ultimate.traceStruct )
-
         ply:SetPos( saved_pos )
-
-        if ultimate.cfg.vars["Show extrapolation line"] then
-            debugoverlay.Line(saved_pos, extrapolated_pos, 0.1, Color(255, 255, 0), true)
-            debugoverlay.Cross(saved_pos, 5, 0.1, Color(0, 255, 0), true)
-            debugoverlay.Cross(extrapolated_pos, 5, 0.1, Color(255, 0, 0), true)
-            debugoverlay.Cross(ExtrPos, 3, 0.1, Color(0, 0, 255), true)
-        end
-
         if ( tr.Entity != ply ) then
             return
         end
     end
 
     local oldangs = Angle(aimang)
-
     if ultimate.cfg.vars["Always backtrack"] and not backtracking then return end
-
     if ultimate.cfg.vars["Fov limit"] then
         local fov = ultimate.cfg.vars["Aimbot FOV"]
-
 		local view = ultimate.cfg.vars["Silent aim"] and ultimate.SilentAngle or cmd:GetViewAngles()
 		local ang = aimang - view
-
 		ang:Normalize()
-
 		ang = math_sqrt(ang.x * ang.x + ang.y * ang.y)
-
         if ang > fov then
             ultimate.targetVector = false
 		    return
@@ -6839,23 +6637,15 @@ function ultimate.Aim(cmd)
     end
 
     if not ultimate.CanShoot(cmd) then return end
-
     function ultimate.simtimeCheck(me)
         if not ultimate.cfg.vars["Wait for simtime update"] then return true end
         return me.simtime_updated
     end
-
     if not ultimate.simtimeCheck(me) then return end
-
     if not ultimate.cfg.vars["Aimbot smoothing"] and ultimate.SkipCommand then return end
-
     ultimate.aimingrn = true
-
-    // Knife bot rebuild Hellcat
-
     local altfire = false
     local canstab, rightstab = ultimate.CanStab( ply, bone, ply:Health() )
-
     local is_knife = false
     for i = 1, #ultimate.knifes do
         if StartsWith(w:GetClass(), ultimate.knifes[i].str) then
@@ -6863,27 +6653,20 @@ function ultimate.Aim(cmd)
             break
         end
     end
-
     if ultimate.cfg.vars["Knifebot"] and canstab and is_knife then
         altfire = rightstab
     elseif ultimate.cfg.vars["Knifebot"] and not canstab and is_knife then
         return
     end
 
-    local StartPred      = me:GetShootPos():Distance( bone )
-
+    local StartPred = me:GetShootPos():Distance( bone )
     if StartsWith(w:GetClass(), "rust_") or StartsWith(w:GetClass(), "weapon_crossbow") and StartPred > 80 then
-
-        local PredPos =  bone
-
+        local PredPos = bone
         gRustPred = true
-
-        local Distance      = me:GetShootPos():Distance( PredPos )
-
+        local Distance = me:GetShootPos():Distance( PredPos )
         ultimate.NotPredictileWep = { ["rust_dbarrel"] = true, ["rust_spas12"] = true, ["rust_waterpipe"] = true, ["rust_pumpshotgun"] = true }
-
         if ultimate.NotPredictileWep[ w:GetClass() ] or Distance < 80 then
-            PredPos =  bone
+            PredPos = bone
         else
             local Velocity = 5000
             if StartsWith(w:GetClass(), "rust_huntingbow") then
@@ -6897,148 +6680,98 @@ function ultimate.Aim(cmd)
             elseif StartsWith(w:GetClass(), "weapon_crossbow") then
                 Velocity = 3500
             end
-
             if Distance < 80 then
                 return
             end
-
-            local TravelTime    = Distance / Velocity
+            local TravelTime = Distance / Velocity
             local PredTime = ( ded.GetLatency( 0 ) + ded.GetLatency( 1 ) ) + TravelTime
-
             ded.StartSimulation( ply:EntIndex() )
                 for i = 1, ultimate.TIME_TO_TICKS(PredTime) do
                     ded.SimulateTick()
                 end
                 local ModuleData = ded.GetSimulationData()
-                PredPos = ModuleData.m_vecAbsOrigin + (bone  -  ply:GetPos())
+                PredPos = ModuleData.m_vecAbsOrigin + (bone - ply:GetPos())
             ded.FinishSimulation()
-
-            Distance            = me:GetShootPos():Distance( PredPos )
-            TravelTime          = Distance / Velocity
-
+            Distance = me:GetShootPos():Distance( PredPos )
+            TravelTime = Distance / Velocity
             if StartsWith(w:GetClass(), "weapon_crossbow") then
                 PredPos.z = PredPos.z
             else
-                local Gravity =  (9.81 * 51.4285714 ) * (TravelTime^2) / 2
+                local Gravity = (9.81 * 51.4285714 ) * (TravelTime^2) / 2
                 PredPos.z = PredPos.z + Gravity
             end
-
             ultimate.traceStruct.start = me:GetShootPos()
             ultimate.traceStruct.endpos = PredPos
             ultimate.traceStruct.filter = me
             ultimate.traceStruct.mask = MASK_SHOT
-
             local Trace = TraceLine( ultimate.traceStruct )
-
             if Trace.Hit and not Trace.Entity:IsPlayer() then
                 return
             end
         end
-
-        debugoverlay.Cross( PredPos, 3, 0.1, color_white, true )
-
-        finalAngle = ( Vector( PredPos )  - me:GetShootPos() ):Angle()
-
+        finalAngle = ( Vector( PredPos ) - me:GetShootPos() ):Angle()
         if ultimate.cfg.vars["Norecoil"] then
             finalAngle = ultimate.NoRecoil(finalAngle)
         end
-
         if ultimate.cfg.vars["Nospread"] then
             finalAngle = ultimate.NoSpread(cmd,finalAngle)
         end
-
         finalAngle:Normalize()
-
         if ultimate.cfg.vars["Auto fire"] then
             cmd:AddKey( IN_ATTACK )
         end
-
         cmd:SetViewAngles( finalAngle )
     end
-
     if ultimate.cfg.vars["Norecoil"] then
         finalAngle = ultimate.NoRecoil(finalAngle)
     end
-
-    if ultimate.cfg.vars["Force seed"] then
-        //ded.ForceSeed( cmd )
-    end
-
     if ultimate.cfg.vars["Nospread"] then
         finalAngle = ultimate.NoSpread(cmd,finalAngle)
     end
-
     if ultimate.cfg.vars["On shot aa"] and !w:GetClass():StartWith( "cw_" ) and !w:GetClass():StartWith( "swb_" ) then
         finalAngle = Angle(-finalAngle.p - 180, finalAngle.y + 180, 0)
     end
-
     if ultimate.cfg.vars["Facestab"] and is_knife then
         local angles = ply:EyeAngles()
-
         finalAngle.y = angles.y
         finalAngle.p = angles.p
-
         altfire = true
     end
-
     if ultimate.cfg.vars["Aimbot smoothing"] then
         local va = cmd:GetViewAngles()
         va.r = 0
-
         local rat = ultimate.cfg.vars["Smoothing"] * 100
         local ret = LerpAngle( FrameTime()*rat, va, finalAngle )
-
         finalAngle = ret
     end
-
     if ultimate.cfg.vars["Projectile aimbot"] then
         local predTime = math.ceil( ( me:EyePos() ):DistToSqr( ply:GetPos() ) / 3600 )
-
-        //print( predTime )
-
-        //if predTime > 15 then return end
-
         ded.StartSimulation( ply:EntIndex() )
-
         for tick = 1, predTime do
             ded.SimulateTick()
         end
-
         local data = ded.GetSimulationData()
         local vec = data.m_vecAbsOrigin
-
         ded.FinishSimulation()
-
         local g = predTime * 0.111
-
-        //print( vec.z, g )
-
         vec.z = vec.z + g
-
         finalAngle = ( vec - me:EyePos() ):Angle()
         finalAngle:Normalize()
-
         cmd:SetViewAngles( finalAngle )
     end
-
-    //ded.SetContextMenu( cmd, ultimate.cfg.vars["pSilent"] or ultimate.cfg.vars["Facestab"] )
     if ultimate.cfg.vars["Facestab"] and is_knife then
         cmd:SetViewAngles( finalAngle )
         ded.SetContextVector( cmd, oldAimAng:Forward(), true )
     elseif ultimate.cfg.vars["pSilent"] then
         ded.SetContextVector( cmd, finalAngle:Forward(), true )
-        //ded.SetContextVector( cmd, oldAimAng:Forward(), true )
     else
         cmd:SetViewAngles( finalAngle )
     end
-
     if backtracking then
         targetTime = ultimate.btrecords[ply][bttick].simulationtime
         timeOffset = ded.GetServerTime() - targetTime
-
         serverArriveTick = ded.GetServerTime() + ded.GetLatency(0) + ded.GetLatency(1)
         diff = serverArriveTick - ultimate.btrecords[ply][bttick].simulationtime
-
         if diff < 0.2 then
             ded.NetSetConVar("cl_interpolate","0")
             ded.NetSetConVar("cl_interp","0")
@@ -7062,22 +6795,17 @@ function ultimate.Aim(cmd)
             ded.NetSetConVar("cl_interp","0")
         end
     end
-
     if ultimate.cfg.vars["Auto fire"] then
         if StartsWith( ultimate.activeWeaponClass, "m9k_" ) then
             cmd:RemoveKey( IN_SPEED )
         end
-
         ultimate.SendPacket = true
         me.simtime_updated = true
         ded.UpdateClientAnimation( me:EntIndex() )
-
         if ultimate.cfg.vars["Resolver"] then
-            ply.shots_fired = (ply.shots_fired or 0) - 1
+            ply.shots_fired = (ply.shots_fired or 0) + 1
         end
-
         local isAutomatic = true
-
         if ultimate.activeWeapon and ultimate.activeWeapon.Primary then
             if ultimate.activeWeapon.Primary.Automatic != nil then
                 isAutomatic = ultimate.activeWeapon.Primary.Automatic
@@ -7088,8 +6816,6 @@ function ultimate.Aim(cmd)
                 isAutomatic = false
             end
         end
-
-
         if altfire or ( ultimate.cfg.vars["Alt Rapid fire"] and cmd:CommandNumber() % 2 == 0 ) then
             cmd:AddKey(IN_ATTACK2)
         else
@@ -7097,11 +6823,8 @@ function ultimate.Aim(cmd)
                 cmd:AddKey(IN_ATTACK)
             end
         end
-
         ultimate.SkipCommand = true
-
     end
-
     return true
 end
 
@@ -10623,50 +10346,7 @@ function ultimate.DrawESP()
 
             ttbl[pos] = ttbl[pos] + 0.8
         end
-        
-        -- Индикация Exploit Fixer
-        if ultimate.cfg.vars["Exploit Fixer"] and v.exploitData and v.exploitData.isExploiting then
-            local name = "EXPLOITING"
-            local pos = 2 -- Right side
-            local tw, th = surface_GetTextSize(name)
-            
-            surface_SetTextColor(255, 0, 0, 255)
-            surface_SetTextPos(poses[pos]-ultimate.getTextX(v,tw,pos),ultimate.getTextY(MaxY,MinY,th,pos,ttbl[pos]))
-            surface_DrawText(name)
-            
-            -- Показываем количество подозрительных обновлений
-            local suspText = "SUS: " .. math_floor(v.exploitData.suspiciousUpdates)
-            local stw, sth = surface_GetTextSize(suspText)
-            surface_SetTextColor(255, 128, 0, 255)
-            surface_SetTextPos(poses[pos]-ultimate.getTextX(v,stw,pos),ultimate.getTextY(MaxY,MinY,sth,pos,ttbl[pos] + 0.8))
-            surface_DrawText(suspText)
-            
-            ttbl[pos] = ttbl[pos] + 1.6
-            surface_SetTextColor(ultimate.Colors[255])
-            
-            -- Рисуем линию от фейковой к реальной позиции
-            if v.exploitData.realPosition and v.exploitData.correctionActive then
-                local fakePos = v.entity:GetPos() + Vector(0, 0, 40)
-                local realPos = v.exploitData.realPosition + Vector(0, 0, 40)
-                
-                local fakeScreen = fakePos:ToScreen()
-                local realScreen = realPos:ToScreen()
-                
-                if fakeScreen.visible and realScreen.visible then
-                    -- Линия от фейковой к реальной
-                    surface_SetDrawColor(255, 0, 0, 200)
-                    surface_DrawLine(fakeScreen.x, fakeScreen.y, realScreen.x, realScreen.y)
-                    
-                    -- Маркер реальной позиции
-                    surface_SetDrawColor(0, 255, 0, 200)
-                    surface_DrawRect(realScreen.x - 3, realScreen.y - 3, 6, 6)
-                    
-                    -- Маркер фейковой позиции
-                    surface_SetDrawColor(255, 0, 0, 200)
-                    surface_DrawRect(fakeScreen.x - 3, fakeScreen.y - 3, 6, 6)
-                end
-            end
-        end
+       
 
         if ultimate.cfg.vars["Print Distance"] then
             local METERS_TO_UNITS = 51.4285714
@@ -10950,121 +10630,87 @@ do
             surface.SetTextPos(ind.x + w - 8 - lc_w, cy)
             surface.DrawText(lc_txt)
         end
+        
+        ultimate.CrosshairTypes = {}
+
+ultimate.CrosshairTypes[1] = function(sw, sh, sz, col)
+    draw.RoundedBox(0, sw/2-sz-15, sh/2-sz/2, sz+10, sz, col)
+    draw.RoundedBox(0, sw/2+4, sh/2-sz/2, sz+10, sz, col)
+    draw.RoundedBox(0, sw/2-sz/2, sh/2-sz/2-15, sz, sz+10, col)
+    draw.RoundedBox(0, sw/2-sz/2, sh/2+4, sz, sz+10, col)
+end
+
+ultimate.CrosshairTypes[2] = function(sw, sh, sz, col)
+    draw.RoundedBox(0, sw/2-sz/2-1, sh/2-sz/2-1, sz+2, sz+2, color_black)
+    draw.RoundedBox(0, sw/2-sz/2, sh/2-sz/2, sz, sz, col)
+end
+
+ultimate.CrosshairTypes[3] = function(sw, sh, sz, col)
+    draw.SimpleText("✜", "DTFont", sw/2, sh/2, col, 1, 1)
+end
+
+ultimate.CrosshairTypes[4] = function(sw, sh, sz, col)
+    ultimate.ch = ultimate.ch or {time = 0, split = false, offset = 0}
+    local rt = (CurTime() * 180) % 360
+    local cx, cy = sw/2, sh/2
+    if CurTime() - ultimate.ch.time > 3 then ultimate.ch.time = CurTime() ultimate.ch.split = true end
+    if ultimate.ch.split then
+        ultimate.ch.offset = Lerp(FrameTime() * 6, ultimate.ch.offset, sz * 2.5)
+        if ultimate.ch.offset > sz * 2.4 and CurTime() - ultimate.ch.time > 1.5 then ultimate.ch.split = false end
+    else ultimate.ch.offset = Lerp(FrameTime() * 12, ultimate.ch.offset, 0) end
+
+    for i = 0, 7 do
+        local ang = math.rad(i * 45)
+        local px, py = cx + math.sin(ang) * ultimate.ch.offset, cy - math.cos(ang) * ultimate.ch.offset
+        local s = sz * (1 - (ultimate.ch.offset / (sz * 2.5)) * 0.4)
+        local pr = -rt
+        local pts = {
+            s * math.sin(math.rad(pr - 90)), s * math.cos(math.rad(pr - 90)), s * math.cos(math.rad(pr - 90) + 1),
+            s * math.sin(math.rad(pr)), s * math.cos(math.rad(pr)), s * math.sin(math.rad(pr) + 1),
+            s * math.sin(math.rad(pr + 90)), s * math.cos(math.rad(pr + 90)), s * math.cos(math.rad(pr + 90) + 1),
+            s * math.sin(math.rad(pr + 180)), s * math.cos(math.rad(pr + 180)), s * math.sin(math.rad(pr + 180) + 1)
+        }
+        surface.SetDrawColor(0, 0, 0, 255)
+        for ox = -1, 1 do for oy = -1, 1 do if ox != 0 or oy != 0 then
+            surface.DrawLine(px+ox, py+oy, px+ox+pts[1], py+oy-pts[2])
+            surface.DrawLine(px+ox+pts[1], py+oy-pts[2], px+ox+pts[1], py+oy-pts[3])
+            surface.DrawLine(px+ox, py+oy, px+ox+pts[4], py+oy-pts[5])
+            surface.DrawLine(px+ox+pts[4], py+oy-pts[5], px+ox+pts[6], py+oy-pts[5])
+            surface.DrawLine(px+ox, py+oy, px+ox+pts[7], py+oy-pts[8])
+            surface.DrawLine(px+ox+pts[7], py+oy-pts[8], px+ox+pts[7], py+oy-pts[9])
+            surface.DrawLine(px+ox, py+oy, px+ox+pts[10], py+oy-pts[11])
+            surface.DrawLine(px+ox+pts[10], py+oy-pts[11], px+ox+pts[12], py+oy-pts[11])
+        end end end
+        surface.SetDrawColor(col)
+        surface.DrawLine(px, py, px+pts[1], py-pts[2])
+        surface.DrawLine(px+pts[1], py-pts[2], px+pts[1], py-pts[3])
+        surface.DrawLine(px, py, px+pts[4], py-pts[5])
+        surface.DrawLine(px+pts[4], py-pts[5], px+pts[6], py-pts[5])
+        surface.DrawLine(px, py, px+pts[7], py-pts[8])
+        surface.DrawLine(px+pts[7], py-pts[8], px+pts[7], py-pts[9])
+        surface.DrawLine(px, py, px+pts[10], py-pts[11])
+        surface.DrawLine(px+pts[10], py-pts[11], px+pts[12], py-pts[11])
+    end
+end
+
+ultimate.CrosshairTypes[5] = function(sw, sh, sz, col)
+    local cx, cy = sw / 2, sh / 2
+    surface.SetDrawColor(col)
+    surface.DrawOutlinedRect(cx - 5, cy - 5, 10, 10)
+    surface.DrawOutlinedRect(cx - 2, cy - 2, 4, 4)
+end
 
         if ultimate.cfg.vars["Crosshair"] then
-            local csizew = ultimate.cfg.vars["Crosshair size"]
-            local crosshair_color = string_ToColor(ultimate.cfg.colors["Crosshair"])
-
-            if ultimate.cfg.vars["Crosshair type"] == 1 then
-                draw.RoundedBox(0,scrw/2-csizew-15,scrh/2-csizew/2,csizew+10,csizew,crosshair_color)
-                draw.RoundedBox(0,scrw/2+4,scrh/2-csizew/2,csizew+10,csizew,crosshair_color)
-                draw.RoundedBox(0,scrw/2-csizew/2,scrh/2-csizew/2-15,csizew,csizew+10,crosshair_color)
-                draw.RoundedBox(0,scrw/2-csizew/2,scrh/2+4,csizew,csizew+10,crosshair_color)
-
-            elseif ultimate.cfg.vars["Crosshair type"] == 2 then
-                draw.RoundedBox(0,scrw/2-csizew/2-1,scrh/2-csizew/2-1,csizew+2,csizew+2,color_black)
-                draw.RoundedBox(0,scrw/2-csizew/2,scrh/2-csizew/2,csizew,csizew,crosshair_color)
-
-            elseif ultimate.cfg.vars["Crosshair type"] == 3 then
-                draw.SimpleText("✜","DTFont",scrw/2,scrh/2,crosshair_color,TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
-
-            elseif ultimate.cfg.vars["Crosshair type"] == 4 then
-                ultimate.ch = ultimate.ch or {time = 0, split = false, offset = 0, pieces = {}}
-
-                local rotation_angle = (CurTime() * 180) % 360
-                local scale = csizew
-                local cx, cy = scrw/2, scrh/2
-
-                -- триггер разлёта каждые 3 сек
-                if CurTime() - ultimate.ch.time > 3 then
-                    ultimate.ch.time = CurTime()
-                    ultimate.ch.split = true
-                end
-
-                -- анимация разлёта/возврата
-                if ultimate.ch.split then
-                    ultimate.ch.offset = Lerp(FrameTime() * 6, ultimate.ch.offset, scale * 2.5)
-                    if ultimate.ch.offset > scale * 2.4 then
-                        -- держим разлетевшимися 1.5 сек
-                        if CurTime() - ultimate.ch.time > 1.5 then
-                            ultimate.ch.split = false
-                        end
-                    end
-                else
-                    ultimate.ch.offset = Lerp(FrameTime() * 12, ultimate.ch.offset, 0)
-                end
-
-                local off = ultimate.ch.offset
-
-                -- рисуем 8 копий кроссхэира
-                for i = 0, 7 do
-                    local ang = math.rad(i * 45)
-                    local pieceX = cx + math.sin(ang) * off
-                    local pieceY = cy - math.cos(ang) * off
-
-                    -- размер кусочков уменьшается при разлёте
-                    local pieceScale = scale * (1 - (off / (scale * 2.5)) * 0.4)
-
-                    -- вращение в противоположную сторону (минус вместо плюса)
-                    local pieceRotation = -rotation_angle
-
-                    -- рисуем маленький крестик в каждой позиции
-                    local points = {
-                        pieceScale * math.sin(math.rad(pieceRotation - 90)),
-                        pieceScale * math.cos(math.rad(pieceRotation - 90)),
-                        pieceScale * math.cos(math.rad(pieceRotation - 90) + 1),
-
-                        pieceScale * math.sin(math.rad(pieceRotation)),
-                        pieceScale * math.cos(math.rad(pieceRotation)),
-                        pieceScale * math.sin(math.rad(pieceRotation) + 1),
-
-                        pieceScale * math.sin(math.rad(pieceRotation + 90)),
-                        pieceScale * math.cos(math.rad(pieceRotation + 90)),
-                        pieceScale * math.cos(math.rad(pieceRotation + 90) + 1),
-
-                        pieceScale * math.sin(math.rad(pieceRotation + 180)),
-                        pieceScale * math.cos(math.rad(pieceRotation + 180)),
-                        pieceScale * math.sin(math.rad(pieceRotation + 180) + 1)
-                    }
-
-                    -- outline
-                    surface.SetDrawColor(0, 0, 0, 255)
-                    for ox = -1, 1 do
-                        for oy = -1, 1 do
-                            if ox ~= 0 or oy ~= 0 then
-                                surface.DrawLine(pieceX + ox, pieceY + oy, pieceX + ox + points[1], pieceY + oy - points[2])
-                                surface.DrawLine(pieceX + ox + points[1], pieceY + oy - points[2], pieceX + ox + points[1], pieceY + oy - points[3])
-
-                                surface.DrawLine(pieceX + ox, pieceY + oy, pieceX + ox + points[4], pieceY + oy - points[5])
-                                surface.DrawLine(pieceX + ox + points[4], pieceY + oy - points[5], pieceX + ox + points[6], pieceY + oy - points[5])
-
-                                surface.DrawLine(pieceX + ox, pieceY + oy, pieceX + ox + points[7], pieceY + oy - points[8])
-                                surface.DrawLine(pieceX + ox + points[7], pieceY + oy - points[8], pieceX + ox + points[7], pieceY + oy - points[9])
-
-                                surface.DrawLine(pieceX + ox, pieceY + oy, pieceX + ox + points[10], pieceY + oy - points[11])
-                                surface.DrawLine(pieceX + ox + points[10], pieceY + oy - points[11], pieceX + ox + points[12], pieceY + oy - points[11])
-                            end
-                        end
-                    end
-
-                    -- main crosshair
-                    surface.SetDrawColor(crosshair_color)
-
-                    surface.DrawLine(pieceX, pieceY, pieceX + points[1], pieceY - points[2])
-                    surface.DrawLine(pieceX + points[1], pieceY - points[2], pieceX + points[1], pieceY - points[3])
-
-                    surface.DrawLine(pieceX, pieceY, pieceX + points[4], pieceY - points[5])
-                    surface.DrawLine(pieceX + points[4], pieceY - points[5], pieceX + points[6], pieceY - points[5])
-
-                    surface.DrawLine(pieceX, pieceY, pieceX + points[7], pieceY - points[8])
-                    surface.DrawLine(pieceX + points[7], pieceY - points[8], pieceX + points[7], pieceY - points[9])
-
-                    surface.DrawLine(pieceX, pieceY, pieceX + points[10], pieceY - points[11])
-                    surface.DrawLine(pieceX + points[10], pieceY - points[11], pieceX + points[12], pieceY - points[11])
-                end
-            end
-        end
-
+    local crosshair_type = ultimate.cfg.vars["Crosshair type"]
+    if ultimate.CrosshairTypes[crosshair_type] then
+        ultimate.CrosshairTypes[crosshair_type](
+            scrw, 
+            scrh, 
+            ultimate.cfg.vars["Crosshair size"], 
+            string_ToColor(ultimate.cfg.colors["Crosshair"])
+        )
+    end
+end
 
         if ultimate.cfg.vars["Auto Vape"] then
             surface_SimpleText(38,scrh-220,"Vape: ", ultimate.tyaga == 0 and blc or lc)
@@ -11188,76 +10834,107 @@ do
                 surface_DrawLine( pos.x, pos.y, scrwc, scrhc )
             end
 
-            if ultimate.cfg.vars["Aimbot marker"] then
+            if ultimate.cfg.vars["Aimbot marker"] then 
                 local pos = ultimate.targetVector:ToScreen()
+                local markerMode = ultimate.cfg.vars["Aimbot marker mode"] or 1
 
-                surface_SetDrawColor( 0, 0, 0 )
-                surface_DrawRect( pos.x - 6, pos.y - 6, 5, 3 )
-                surface_DrawRect( pos.x + 2, pos.y - 6, 5, 3 )
+                if markerMode == 2 then
+                    local radius = 4
+                    surface.SetDrawColor(0, 0, 0, 255)
+                    surface.DrawCircle(pos.x, pos.y, radius + 1)
+                    local col = string.ToColor(ultimate.cfg.colors["Aimbot marker"])
+                    surface.SetDrawColor(col.r, col.g, col.b, col.a)
+                    surface.DrawCircle(pos.x, pos.y, radius)
+                else
+                    surface.SetDrawColor( 0, 0, 0 )
+                    surface.DrawRect( pos.x - 6, pos.y - 6, 5, 3 )
+                    surface.DrawRect( pos.x + 2, pos.y - 6, 5, 3 )
 
-                surface_DrawRect( pos.x - 6, pos.y + 4, 5, 3 )
-                surface_DrawRect( pos.x + 2, pos.y + 4, 5, 3 )
+                    surface.DrawRect( pos.x - 6, pos.y + 4, 5, 3 )
+                    surface.DrawRect( pos.x + 2, pos.y + 4, 5, 3 )
 
-                surface_DrawRect( pos.x - 6, pos.y - 6, 3, 5 )
-                surface_DrawRect( pos.x + 4, pos.y - 6, 3, 5 )
+                    surface.DrawRect( pos.x - 6, pos.y - 6, 3, 5 )
+                    surface.DrawRect( pos.x + 4, pos.y - 6, 3, 5 )
 
-                surface_DrawRect( pos.x - 6, pos.y + 2, 3, 5 )
-                surface_DrawRect( pos.x + 4, pos.y + 2, 3, 5 )
+                    surface.DrawRect( pos.x - 6, pos.y + 2, 3, 5 )
+                    surface.DrawRect( pos.x + 4, pos.y + 2, 3, 5 )
 
-                surface_SetDrawColor( string_ToColor( ultimate.cfg.colors["Aimbot marker"] ) )
+                    surface.SetDrawColor( string.ToColor( ultimate.cfg.colors["Aimbot marker"] ) )
+                    
+                    surface.DrawRect( pos.x - 5, pos.y - 5, 3, 1 )
+                    surface.DrawRect( pos.x + 3, pos.y - 5, 3, 1 )
 
-                surface_DrawRect( pos.x - 5, pos.y - 5, 3, 1 )
-                surface_DrawRect( pos.x + 3, pos.y - 5, 3, 1 )
+                    surface.DrawRect( pos.x - 5, pos.y + 5, 3, 1 )
+                    surface.DrawRect( pos.x + 3, pos.y + 5, 3, 1 )
 
-                surface_DrawRect( pos.x - 5, pos.y + 5, 3, 1 )
-                surface_DrawRect( pos.x + 3, pos.y + 5, 3, 1 )
+                    surface.DrawRect( pos.x - 5, pos.y - 5, 1, 3 )
+                    surface.DrawRect( pos.x + 5, pos.y - 5, 1, 3 )
 
-                surface_DrawRect( pos.x - 5, pos.y - 5, 1, 3 )
-                surface_DrawRect( pos.x + 5, pos.y - 5, 1, 3 )
-
-                surface_DrawRect( pos.x - 5, pos.y + 3, 1, 3 )
-                surface_DrawRect( pos.x + 5, pos.y + 3, 1, 3 )
-
+                    surface.DrawRect( pos.x - 5, pos.y + 3, 1, 3 )
+                    surface.DrawRect( pos.x + 5, pos.y + 3, 1, 3 )
+                end
             end
         end
 
+if ultimate.cfg.vars[ "On screen logs" ] and table.Count( ultimate.onScreenLogs ) > 0 then
+    local tick = engine.TickCount()
+    local cx, cy = ScrW() / 2, ScrH() - 100
+    local logs_to_draw = {}
 
-        if ultimate.cfg.vars[ "On screen logs" ] and table.Count( ultimate.onScreenLogs ) > 0 then
-            local tick = engine.TickCount()
-            local x, y = scrw / 2, scrh / 2 + 45
-
-            for k, v in pairs( ultimate.onScreenLogs ) do
-
-                if ultimate.TICKS_TO_TIME( tick - ultimate.onScreenLogs[ k ].tick ) > 8 then
-                    ultimate.onScreenLogs[ k ] = nil
-                    continue
-                end
-
-                local data = ultimate.onScreenLogs[ k ]
-                local fstr = ""
-
-                for o = 1, #data[ 1 ] do
-                    fstr = fstr .. data[ 1 ][ o ]
-                end
-
-                local tw, th = surface_GetTextSize( fstr )
-
-                x = x - tw / 2
-
-                for p = 1, #data[ 1 ] do
-                    local str = data[ 1 ][ p ]
-                    tw, th = surface_GetTextSize( str )
-
-                    surface_SetTextPos( x, y )
-                    surface_SetTextColor( data[ 2 ][ p ] )
-                    surface_DrawText( str )
-
-                    x = x + tw
-                end
-
-                x, y = scrw / 2, y + th
-            end
+    for k, v in pairs( ultimate.onScreenLogs ) do
+        if ultimate.TICKS_TO_TIME( tick - v.tick ) > 8 then
+            ultimate.onScreenLogs[ k ] = nil
+            continue
         end
+        table.insert(logs_to_draw, v)
+    end
+
+    table.sort(logs_to_draw, function(a, b) return a.tick > b.tick end)
+
+    surface.SetFont("veranda") -- Очень маленький и четкий шрифт
+
+    for i = 1, #logs_to_draw do
+        local data = logs_to_draw[i]
+        local fstr = ""
+        for o = 1, #data[ 1 ] do
+            fstr = fstr .. data[ 1 ][ o ]
+        end
+
+        local tw, th = surface_GetTextSize( fstr )
+        local box_w = tw + 12
+        local box_h = th + 4
+        local x = cx - box_w / 2
+        local y = cy
+
+        surface_SetDrawColor(0, 0, 0, 250)
+        surface_DrawRect(x, y, box_w, box_h)
+
+        surface_SetDrawColor(0, 0, 0, 255)
+        surface_DrawOutlinedRect(x, y, box_w, box_h)
+
+        for j = 0, box_w - 1 do
+            local r = Lerp(j / box_w, 59, 202)
+            local g = Lerp(j / box_w, 175, 70)
+            local b = Lerp(j / box_w, 222, 205)
+            surface_SetDrawColor(r, g, b, 255)
+            surface_DrawRect(x + j, y, 1, 1)
+        end
+
+        local text_x = x + 6
+        for p = 1, #data[ 1 ] do
+            local str = data[ 1 ][ p ]
+            local color = data[ 2 ][ p ]
+            local sw, sh = surface_GetTextSize( str )
+
+            surface_SetTextPos( text_x, y + 2 )
+            surface_SetTextColor( color.r, color.g, color.b, 255 )
+            surface_DrawText( str )
+            text_x = text_x + sw
+        end
+
+        cy = cy - (box_h + 3)
+    end
+end
         
         -- AA Switch Logs
         if ultimate.cfg.vars["AA switch logs"] and #ultimate.aa.switchLogs > 0 then
@@ -11290,7 +10967,32 @@ do
             end
         end
 
-        if ultimate.cfg.vars["WaterMark"] then
+ if ultimate.cfg.vars["WaterMark"] then
+
+   local  mode = ultimate.cfg.vars["WaterMark1"]
+     if mode == 1 then
+
+    local serverTickrate = math.floor(1 / engine.TickInterval())
+    local time = os.date("%H:%M")
+    local ply = LocalPlayer()
+    local nickname = IsValid(ply) and ply:Nick() or "unknown"
+    local build = "M0N0L1TE.W1N"
+    local ping = IsValid(ply) and ply:Ping() or 0
+
+    local text = string.format("✝ %s | %s | %d tickrate | %d ping | TIME: %s ✝",
+        build,
+        nickname,
+        serverTickrate,
+        ping,
+        time
+    )
+
+    surface.SetFont("Watermark_Bold")
+    local tw, th = surface.GetTextSize(text)
+
+    local paddingX, paddingY = 6, 4
+
+    local wmW, wmH = tw + paddingX * 2, th + paddingY * 2
 
     if not ultimate.watermarkData then
         ultimate.watermarkData = {
@@ -11299,73 +11001,63 @@ do
             alpha = 0,
             dragging = false,
             dragOffsetX = 0,
-            dragOffsetY = 0
+            dragOffsetY = 0,
+            hover = false
         }
     end
+
     local data = ultimate.watermarkData
+    local curTime = CurTime()
 
-    local mode = ultimate.cfg.vars["WaterMark1"]
+    data.alpha = math.Approach(data.alpha, 255, FrameTime() * 400)
+    local alpha = data.alpha
 
-    if mode == 1 then
-        -- watermark
-       -- local ply = LocalPlayer()
-     --   if !IsValid(ply) then return end
+    local function IsMouseInBounds(x, y, w, h)
+        local mx, my = gui.MousePos()
+        return mx >= x and mx <= x + w and my >= y and my <= y + h
+    end
 
-     --   local tick = math.floor(1 / engine.TickInterval())
-      --  local ping = ply:Ping()
-       -- local lby = math.floor(ply:GetAngles().y)
+    local mx, my = gui.MousePos()
+    data.hover = IsMouseInBounds(data.x, data.y, wmW, wmH)
 
-     --   data.pt = (data.pt or 0) + FrameTime()
+    if input.IsMouseDown(MOUSE_LEFT) then
+        if not data.dragging then
+            if data.hover then
+                data.dragging = true
+                data.dragOffsetX = mx - data.x
+                data.dragOffsetY = my - data.y
+            end
+        else
+            data.x = mx - data.dragOffsetX
+            data.y = my - data.dragOffsetY
 
-      --  surface.CreateFont("wm_f", { font = "Verdana", size = 12, weight = 600, antialias = true })
+            local borderPadding = 10
+            data.x = math.Clamp(data.x, borderPadding, ScrW() - wmW - borderPadding)
+            data.y = math.Clamp(data.y, borderPadding, ScrH() - wmH - borderPadding)
+        end
+    else
+        data.dragging = false
+    end
 
-      --  local text = string.format("contract.lua | tick %d | %dms | lby %d", tick, ping, lby)
---
-      --  surface.SetFont("wm_f")
-       -- local tw, th = surface.GetTextSize(text)
+    local wmX, wmY = data.x, data.y
 
-      -- local wmW = tw + 16
-       -- local wmH = th + 6
+    local bgColor = Color(0, 0, 0, alpha * 0.6)
+    local textColor = Color(255, 255, 255, alpha)
+    local bloodColor = Color(255, 255, 255, alpha * 0.8)
 
-        -- drag
-     --   data.alpha = math.Approach(data.alpha or 0, 255, FrameTime() * 500)
+    surface.SetDrawColor(bloodColor)
+    surface.DrawRect(wmX, wmY, wmW, 1)
 
-     --   local mx, my = gui.MousePos()
-     --   local hover = mx >= data.x and mx <= data.x + wmW and my >= data.y and my <= data.y + wmH
+    draw.RoundedBoxEx(4, wmX, wmY + 1, wmW, wmH - 1, bgColor, false, false, true, true)
 
-      --  if input.IsMouseDown(MOUSE_LEFT) then
---	if !data.drag then
-	--	if hover then
-	--		data.drag = true
-	--		data.dx = mx - data.x
-	--		data.dy = my - data.y
-	--	end
---	else
-	--	data.x = math.Clamp(mx - data.dx, 0, ScrW() - wmW)
-	--	data.y = math.Clamp(my - data.dy, 0, ScrH() - wmH)
---	end
- --       else
---	data.drag = false
-      --  end
+    surface.SetFont("Watermark_Bold")
+    surface.SetTextColor(Color(0, 0, 0, alpha * 0.3))
+    surface.SetTextPos(wmX + paddingX + 1, wmY + paddingY + 2)
+    surface.DrawText(text)
 
-      --  local x, y = data.x, data.y
-       -- local a = data.alpha / 255
-
-        -- bg
-     --   surface.SetDrawColor(25, 25, 25, 200 * a)
-      --  surface.DrawRect(x, y, wmW, wmH)
-
-        -- accent line
-      --  local hue = (data.pt * 40) % 360
-      --  local accent = HSVToColor(hue, 0.7, 1)
-      --  surface.SetDrawColor(accent.r, accent.g, accent.b, 255 * a)
-       -- surface.DrawRect(x, y, 2, wmH)
-
-        -- text
-       -- surface.SetFont("wm_f")
-     --   surface.SetTextColor(200, 200, 200, 255 * a)
-      --  surface.SetTextPos(x + 8, y + 3)
-       -- surface.DrawText(text)
+    surface.SetTextColor(textColor)
+    surface.SetTextPos(wmX + paddingX, wmY + paddingY + 1)
+    surface.DrawText(text)
 
     elseif mode == 2 then
         local txt = "☪ ULTIMATE V4 ЗОВ ПРИПЯТИ by Hellcat ☪| ".. me:Name() .." | "..#player.GetHumans().." player | "..me:Ping().." ms | "..math_Round(1/TickInterval).." Tickrate"
@@ -11538,6 +11230,11 @@ function ultimate.togglevisible()
 end
 
 function ultimate.PrePlayerDraw(ply, flags)
+	
+	if ultimate.cfg.vars["taunt_disabler"] then
+        pEntity:AnimResetGestureSlot( GESTURE_SLOT_VCD )
+        pEntity:AnimResetGestureSlot( GESTURE_SLOT_CUSTOM )
+    end
     if ultimate.cfg.vars["Taunt resolver"] and ply != me then
         ply:AnimResetGestureSlot(GESTURE_SLOT_VCD)
         ply:AnimResetGestureSlot(GESTURE_SLOT_CUSTOM)
@@ -12026,28 +11723,13 @@ function ultimate.player_hurt(data)
 
 	if attackerid == me:UserID() then
 
-        if ultimate.cfg.vars[ "On screen logs" ] then
-            local hlcolor = string_ToColor( ultimate.cfg.colors[ "On screen logs" ] )
-            local data = {
+        if ultimate.cfg.vars["On screen logs"] then
+            local hlcolor = string_ToColor(ultimate.cfg.colors["On screen logs"])
+            table.insert(ultimate.onScreenLogs, {
                 tick = engine.TickCount(),
-                {
-                    "Hit ",
-                    hurted:Name(),
-                    " for ",
-                    hurted:Health() - health,
-                    " damage"
-                },
-                {
-                    ultimate.HitLogsWhite,
-                    hlcolor,
-                    ultimate.HitLogsWhite,
-                    hlcolor,
-                    ultimate.HitLogsWhite,
-                }
-            }
-
-            ultimate.onScreenLogs[ engine.TickCount() ] = data
-            //print( "hurt", engine.TickCount() )
+                { "Hit ", hurted:Name(), " for ", data.health, " damage" },
+                { ultimate.HitLogsWhite, hlcolor, ultimate.HitLogsWhite, hlcolor, ultimate.HitLogsWhite, hlcolor, ultimate.HitLogsWhite }
+            })
         end
 
         if ultimate.cfg.vars["Hitmarker"] then
@@ -12065,8 +11747,7 @@ function ultimate.player_hurt(data)
 
         if ultimate.cfg.vars["Resolver"] then
             hurted.shots_fired = (hurted.shots_fired or 0) - 1
-        end
-
+        end   
     end
 end
 
@@ -13562,14 +13243,6 @@ do
                 if ultimate.canBacktrack(v) and v != me and v.simtime_updated then
                     ultimate.recordBacktrack(v)
                 end
-                
-                -- Применяем Exploit Fixer
-                if ultimate.cfg.vars["Exploit Fixer"] and v != me then
-                    ultimate.InitExploitFixer(v)
-                    if ultimate.DetectExploit(v) then
-                        ultimate.FixExploitPosition(v)
-                    end
-                end
 
                 if v.break_lc then
                     ultimate.btrecords[ v ] = {}
@@ -13703,262 +13376,17 @@ function ultimate.UpdateAnimation( v )
     v:SetPoseParameter( "head_pitch", 0 )
     v:SetPoseParameter( "head_yaw", 0 )
 
-    if ultimate.cfg.vars["Pitch resolver"] and v.fakepitch then
-        local cfg = ultimate.cfg.vars["Auto Pitch mode"]
-        local ang = v:EyeAngles()
-
-        if cfg == 1 then
-        elseif cfg == 2 then
-            local Pitch = {-89, 89}
-            ang.p = Pitch[v.shots_fired % #Pitch + 1]
-            v:SetPoseParameter("aim_pitch", ang.p)
-            v:SetPoseParameter("head_pitch", ang.p)
-
-        elseif cfg == 3 then
-            local Pitch = {-89, -89, 89, 89}
-            ang.p = Pitch[v.shots_fired % #Pitch + 1]
-            v:SetPoseParameter("aim_pitch", ang.p)
-            v:SetPoseParameter("head_pitch", ang.p)
-
-        elseif cfg == 4 then
-            local Pitch = {-89, 0, 0, 0, 89}
-            ang.p = Pitch[v.shots_fired % #Pitch + 1]
-            v:SetPoseParameter("aim_pitch", ang.p)
-            v:SetPoseParameter("head_pitch", ang.p)
-
-        elseif cfg == 5 then
-            local Pitch = {-89, -89, 0, 0, 89, 89}
-            ang.p = Pitch[v.shots_fired % #Pitch + 1]
-            v:SetPoseParameter("aim_pitch", ang.p)
-            v:SetPoseParameter("head_pitch", ang.p)
-
-        elseif cfg == 6 then
-            local Pitch = {-89}
-            ang.p = Pitch[v.shots_fired % #Pitch + 1]
-            v:SetPoseParameter("aim_pitch", ang.p)
-            v:SetPoseParameter("head_pitch", ang.p)
-        end
+    if ( ultimate.cfg.vars["Pitch resolver"] and v.fakepitch ) then
+        v:SetPoseParameter( "aim_pitch", -89 )
+        v:SetPoseParameter( "head_pitch", -89 )
     end
+    
+    v:InvalidateBoneCache()
+    v:SetupBones()
+
+    v.ChatGestureWeight = 0
 
     ded.InvalidateBoneCache( v:EntIndex() )
-end
-
-// Exploit Fixer - исправление эксплоитов с bSendPacket и тиками
-// 
-// Функционал:
-// 1. Детектирует эксплоиты связанные с манипуляцией bSendPacket (фейк лаг, чоки)
-// 2. Обнаруживает аномалии в симтайме и позициях игроков
-// 3. Показывает реальную модель игрока вместо фейковой
-// 4. Визуализирует эксплоитеров в ESP с индикатором "EXPLOITING"
-// 5. Рисует линию от фейковой позиции к реальной
-//
-// Проверки:
-// - Аномальная разница в симтайме
-// - Телепортация (большое расстояние за тик)
-// - Нулевое обновление симтайма при движении (bSendPacket choke)
-// - Резкое изменение скорости
-// - Детекция фейк лага (большие чоки > 14 тиков)
-// - Аномальное поведение анимаций
-// - Break LC (lagcompensation break)
-//
-ultimate.exploitFixer = ultimate.exploitFixer or {}
-
--- Вспомогательная функция для интерполяции векторов
-local function LerpVector(t, a, b)
-    return Vector(
-        Lerp(t, a.x, b.x),
-        Lerp(t, a.y, b.y),
-        Lerp(t, a.z, b.z)
-    )
-end
-
-function ultimate.InitExploitFixer(ply)
-    if not ply.exploitData then
-        ply.exploitData = {
-            realPosition = ply:GetPos(),
-            lastValidPosition = ply:GetPos(),
-            lastValidSimtime = ded.GetSimulationTime(ply:EntIndex()),
-            ticksWithoutUpdate = 0,
-            suspiciousUpdates = 0,
-            lastVelocity = Vector(0, 0, 0),
-            positionHistory = {},
-            simtimeHistory = {},
-            isExploiting = false,
-            correctionActive = false,
-            lastLogTime = 0  -- Для предотвращения спама в консоль
-        }
-    end
-end
-
-function ultimate.DetectExploit(ply)
-    if not IsValid(ply) or ply == me or not ply:Alive() then return false end
-    if not ply.exploitData then ultimate.InitExploitFixer(ply) end
-    
-    local data = ply.exploitData
-    local curSimtime = ded.GetSimulationTime(ply:EntIndex())
-    local curPos = ply:GetNetworkOrigin()
-    local curVel = ply:GetAbsVelocity()
-    
-    local suspicious = false
-    
-    -- Проверка 1: Аномальная разница в симтайме
-    local simtimeDelta = curSimtime - data.lastValidSimtime
-    if simtimeDelta > 0.5 or simtimeDelta < -0.1 then
-        suspicious = true
-        data.suspiciousUpdates = data.suspiciousUpdates + 1
-    end
-    
-    -- Проверка 2: Телепортация (слишком большое расстояние за тик)
-    local posDelta = curPos:Distance(data.lastValidPosition)
-    local maxDistance = 500 * math.max(simtimeDelta, TickInterval)
-    if posDelta > maxDistance and simtimeDelta > 0 then
-        suspicious = true
-        data.suspiciousUpdates = data.suspiciousUpdates + 2
-    end
-    
-    -- Проверка 3: Нулевое обновление симтайма при движении (bSendPacket choke)
-    if simtimeDelta == 0 and curVel:Length() > 10 then
-        data.ticksWithoutUpdate = data.ticksWithoutUpdate + 1
-        if data.ticksWithoutUpdate > 3 then
-            suspicious = true
-            data.suspiciousUpdates = data.suspiciousUpdates + 1
-        end
-    else
-        data.ticksWithoutUpdate = 0
-    end
-    
-    -- Проверка 4: Резкое изменение скорости
-    local velDelta = (curVel - data.lastVelocity):Length()
-    if velDelta > 1000 and simtimeDelta > 0 then
-        suspicious = true
-        data.suspiciousUpdates = data.suspiciousUpdates + 1
-    end
-    
-    -- Проверка 5: Детекция фейк лага (большие чоки)
-    if ply.flticks and ply.flticks > 14 then
-        suspicious = true
-        data.suspiciousUpdates = data.suspiciousUpdates + 3
-    end
-    
-    -- Проверка 6: Аномальное поведение анимаций
-    if ply.missedanimticks and ply.missedanimticks > 10 then
-        suspicious = true
-        data.suspiciousUpdates = data.suspiciousUpdates + 2
-    end
-    
-    -- Проверка 7: Break LC (lagcompensation break)
-    if ply.break_lc then
-        suspicious = true
-        data.suspiciousUpdates = data.suspiciousUpdates + 2
-    end
-    
-    -- Определяем эксплоит
-    if data.suspiciousUpdates > 5 then
-        if not data.isExploiting then
-            -- Первое обнаружение - логируем
-            if CurTime() - data.lastLogTime > 5 then
-                print("[Exploit Fixer] Обнаружен эксплоит у игрока: " .. ply:Nick())
-                print("[Exploit Fixer] Подозрительных обновлений: " .. math_floor(data.suspiciousUpdates))
-                data.lastLogTime = CurTime()
-            end
-        end
-        data.isExploiting = true
-        data.correctionActive = true
-    elseif data.suspiciousUpdates > 0 then
-        data.suspiciousUpdates = math.max(0, data.suspiciousUpdates - 0.5)
-    end
-    
-    -- Сохраняем историю
-    table_insert(data.positionHistory, curPos)
-    table_insert(data.simtimeHistory, curSimtime)
-    if #data.positionHistory > 10 then
-        table_remove(data.positionHistory, 1)
-        table_remove(data.simtimeHistory, 1)
-    end
-    
-    -- Обновляем валидные данные если не подозрительно
-    if not suspicious then
-        data.lastValidPosition = curPos
-        data.lastValidSimtime = curSimtime
-        data.lastVelocity = curVel
-        
-        if data.suspiciousUpdates <= 2 then
-            data.isExploiting = false
-            data.correctionActive = false
-        end
-    end
-    
-    return data.isExploiting
-end
-
-function ultimate.FixExploitPosition(ply)
-    if not IsValid(ply) or not ply.exploitData or not ply.exploitData.correctionActive then return end
-    
-    local data = ply.exploitData
-    
-    -- Интерполируем реальную позицию на основе истории
-    if #data.positionHistory >= 3 then
-        local avgPos = Vector(0, 0, 0)
-        local validCount = 0
-        
-        for i = 1, #data.positionHistory - 1 do
-            local pos1 = data.positionHistory[i]
-            local pos2 = data.positionHistory[i + 1]
-            local dist = pos1:Distance(pos2)
-            
-            -- Используем только валидные позиции
-            if dist < 300 then
-                avgPos = avgPos + pos2
-                validCount = validCount + 1
-            end
-        end
-        
-        if validCount > 0 then
-            data.realPosition = avgPos / validCount
-        else
-            data.realPosition = data.lastValidPosition
-        end
-    else
-        data.realPosition = data.lastValidPosition
-    end
-    
-    -- Применяем коррекцию к позиции и костям
-    -- Сохраняем оригинальную позицию
-    if not data.originalPosition then
-        data.originalPosition = ply:GetNetworkOrigin()
-    end
-    
-    -- Форсируем обновление костей с корректной позицией
-    ded.InvalidateBoneCache(ply:EntIndex())
-    
-    -- Используем реальную позицию для расчета костей
-    local oldPos = ply:GetPos()
-    
-    -- Интерполируем между текущей и реальной позицией для плавности
-    local lerpFactor = 0.3
-    local correctedPos = LerpVector(lerpFactor, oldPos, data.realPosition)
-    
-    -- Обновляем кости с корректной позицией
-    ply:SetupBones()
-    
-    -- Сохраняем корректную позицию для следующего кадра
-    data.lastCorrectedPosition = correctedPos
-end
-
-function ultimate.ApplyExploitFixer()
-    if not ultimate.cfg.vars["Exploit Fixer"] then return end
-    
-    local plys = player.GetAll()
-    for i = 1, #plys do
-        local ply = plys[i]
-        if ply != me and ply:Alive() then
-            ultimate.InitExploitFixer(ply)
-            
-            if ultimate.DetectExploit(ply) then
-                ultimate.FixExploitPosition(ply)
-            end
-        end
-    end
 end
 
 // AA shit
@@ -14219,25 +13647,20 @@ GAMEMODE["EntityFireBullets"] = function( self, p, data )
     if IsValid(p) and p:IsPlayer() and p ~= me then
         local dirToMe = (me:WorldSpaceCenter() - data.Src):GetNormalized()
         local dotProduct = data.Dir:Dot(dirToMe)
-        
-        -- dotProduct > 0.95 означает, что пуля летит очень близко к нам
-        if dotProduct > 0.95 then
-            SwitchAAOnHit()
-        end
+        if dotProduct > 0.95 then SwitchAAOnHit() end
     end
     if not ultimate.activeWeapon then return end
 
     local tick = engine.TickCount()
     if ultimate.cfg.vars[ "On screen logs" ] and data.Src == me:EyePos() and ultimate.aimingrn and ultimate.target and not ultimate.onScreenLogs[ tick ] and IsFirstTimePredicted() then
         local reason = 1
-
-        local tr = {}
-        tr.filter = me
-        tr.start = data.Src
-        tr.endpos = data.Src + data.Dir * 13337
-        tr.mask = MASK_SHOT
-
-        tr = TraceLine( tr )
+        local tr = {
+            filter = me,
+            start = data.Src,
+            endpos = data.Src + data.Dir * 13337,
+            mask = MASK_SHOT
+        }
+        tr = util.TraceLine( tr )
 
         if ultimate.target.break_lc then
             reason = 4
@@ -14248,20 +13671,17 @@ GAMEMODE["EntityFireBullets"] = function( self, p, data )
         end
 
         local hlcolor = string_ToColor( ultimate.cfg.colors[ ultimate.MissReasons[ reason ].var ] )
-        local data = {
+        local log_data = {
             tick = tick,
-            { "Shot at ", ultimate.target:Name(), " missed due to ", ultimate.MissReasons[ reason ].str, },
-            { ultimate.HitLogsWhite, hlcolor, ultimate.HitLogsWhite, hlcolor, }
+            { "Missed ", ultimate.target:Name(), " in head due to ", ultimate.MissReasons[ reason ].str },
+            { ultimate.HitLogsWhite, hlcolor, ultimate.HitLogsWhite, hlcolor }
         }
-
-        ultimate.onScreenLogs[ tick ] = data
+        ultimate.onScreenLogs[ tick ] = log_data
     end
 
     local spread = data.Spread * -1
-
 	if ultimate.cones[ ultimate.activeWeaponClass ] == spread or spread == ultimate.nullVec then return end
-
-    ultimate.cones[ ultimate.activeWeaponClass ] = spread;
+    ultimate.cones[ ultimate.activeWeaponClass ] = spread
 end
 
 function ultimate.CalcMainActivity(ply, velocity)
@@ -14397,294 +13817,3 @@ ultimate.AddHook( "SetupWorldFog" )
 ultimate.AddHook( "SetupSkyboxFog" )
 
 ultimate.AddHook( "CalcMainActivity" )
-
-
-// ============================================
-// RESOLVER AI - Умный резольвер с автоподбором углов
-// ============================================
-
--- Вспомогательная функция для цвета с альфой
-local function ColorAlpha(col, alpha)
-    return Color(col.r, col.g, col.b, alpha)
-end
-
-ultimate.resolverAI = ultimate.resolverAI or {}
-ultimate.resolverAI.playerData = ultimate.resolverAI.playerData or {}
-
--- Конфиг для Resolver AI
-ultimate.cfg.vars["Resolver AI"] = false
-ultimate.cfg.vars["Resolver AI mode"] = 1
-ultimate.presets["Resolver AI mode"] = { "Adaptive", "Learning", "Bruteforce+", "Hybrid" }
-ultimate.cfg.vars["Resolver AI show logs"] = true
-ultimate.cfg.vars["Resolver AI auto switch"] = true
-ultimate.cfg.vars["Resolver AI switch delay"] = 0.3
-ultimate.cfg.vars["Resolver AI max attempts"] = 5
-
--- Углы для подбора
-ultimate.resolverAI.angles = {
-    { name = "Right", yaw = 60, pitch = 0 },
-    { name = "Left", yaw = -60, pitch = 0 },
-    { name = "Back", yaw = 180, pitch = 0 },
-    { name = "Right+", yaw = 90, pitch = 0 },
-    { name = "Left+", yaw = -90, pitch = 0 },
-    { name = "R45", yaw = 45, pitch = 0 },
-    { name = "L45", yaw = -45, pitch = 0 },
-    { name = "R30", yaw = 30, pitch = 0 },
-    { name = "L30", yaw = -30, pitch = 0 },
-    { name = "Zero", yaw = 0, pitch = 0 },
-    { name = "R120", yaw = 120, pitch = 0 },
-    { name = "L120", yaw = -120, pitch = 0 },
-}
-
--- Инициализация данных игрока
-local function InitPlayerData(ply)
-    local sid = ply:SteamID64()
-    if not ultimate.resolverAI.playerData[sid] then
-        ultimate.resolverAI.playerData[sid] = {
-            currentAngle = 1,
-            lastSwitch = 0,
-            missCount = 0,
-            hitCount = 0,
-            angleStats = {},
-            bestAngle = 1,
-            lastHit = 0,
-            totalShots = 0,
-            mode = "learning",
-            logs = {},
-        }
-        
-        -- Инициализация статистики для каждого угла
-        for i = 1, #ultimate.resolverAI.angles do
-            ultimate.resolverAI.playerData[sid].angleStats[i] = {
-                hits = 0,
-                misses = 0,
-                successRate = 0
-            }
-        end
-    end
-    return ultimate.resolverAI.playerData[sid]
-end
-
--- Добавление лога
-local function AddLog(ply, text, color)
-    local data = InitPlayerData(ply)
-    local logEntry = {
-        text = text,
-        time = CurTime(),
-        alpha = 255,
-        color = color or Color(255, 255, 255)
-    }
-    table_insert(data.logs, 1, logEntry)
-    
-    -- Ограничиваем количество логов
-    if #data.logs > 5 then
-        table_remove(data.logs)
-    end
-end
-
--- Выбор следующего угла (адаптивный режим)
-local function SelectNextAngle(ply, data)
-    local mode = ultimate.cfg.vars["Resolver AI mode"]
-    
-    if mode == 1 then -- Adaptive
-        -- Выбираем угол с лучшей статистикой
-        local bestRate = -1
-        local bestIdx = 1
-        
-        for i, stats in pairs(data.angleStats) do
-            if stats.successRate > bestRate then
-                bestRate = stats.successRate
-                bestIdx = i
-            end
-        end
-        
-        -- Если все углы плохие, пробуем случайный
-        if bestRate < 0.3 and data.totalShots > 10 then
-            bestIdx = math_random(1, #ultimate.resolverAI.angles)
-        end
-        
-        return bestIdx
-        
-    elseif mode == 2 then -- Learning
-        -- Обучающийся режим - пробуем все углы по очереди
-        if data.totalShots < #ultimate.resolverAI.angles * 2 then
-            return (data.currentAngle % #ultimate.resolverAI.angles) + 1
-        else
-            -- После обучения используем лучший
-            return data.bestAngle
-        end
-        
-    elseif mode == 3 then -- Bruteforce+
-        -- Улучшенный брутфорс с приоритетом
-        local priority = {1, 2, 5, 6, 3, 4, 7, 8, 9, 10, 11, 12}
-        local idx = (data.missCount % #priority) + 1
-        return priority[idx]
-        
-    elseif mode == 4 then -- Hybrid
-        -- Гибридный: адаптивный + случайность
-        if math_random() < 0.7 then
-            return data.bestAngle
-        else
-            return math_random(1, #ultimate.resolverAI.angles)
-        end
-    end
-    
-    return 1
-end
-
--- Обновление статистики
-local function UpdateStats(ply, hit)
-    local data = InitPlayerData(ply)
-    local currentIdx = data.currentAngle
-    local stats = data.angleStats[currentIdx]
-    
-    if hit then
-        stats.hits = stats.hits + 1
-        data.hitCount = data.hitCount + 1
-        data.lastHit = CurTime()
-        
-        local angleName = ultimate.resolverAI.angles[currentIdx].name
-        AddLog(ply, "HIT: " .. angleName, Color(0, 255, 0))
-    else
-        stats.misses = stats.misses + 1
-        data.missCount = data.missCount + 1
-        
-        local angleName = ultimate.resolverAI.angles[currentIdx].name
-        AddLog(ply, "MISS: " .. angleName, Color(255, 0, 0))
-    end
-    
-    data.totalShots = data.totalShots + 1
-    
-    -- Пересчитываем процент успеха
-    local total = stats.hits + stats.misses
-    if total > 0 then
-        stats.successRate = stats.hits / total
-    end
-    
-    -- Обновляем лучший угол
-    local bestRate = -1
-    for i, s in pairs(data.angleStats) do
-        if s.successRate > bestRate and (s.hits + s.misses) > 2 then
-            bestRate = s.successRate
-            data.bestAngle = i
-        end
-    end
-    
-    -- Автоматическое переключение при промахе
-    if not hit and ultimate.cfg.vars["Resolver AI auto switch"] then
-        local delay = ultimate.cfg.vars["Resolver AI switch delay"]
-        if CurTime() - data.lastSwitch > delay then
-            data.currentAngle = SelectNextAngle(ply, data)
-            data.lastSwitch = CurTime()
-            
-            local newAngleName = ultimate.resolverAI.angles[data.currentAngle].name
-            AddLog(ply, "Switch: " .. newAngleName, Color(255, 255, 0))
-        end
-    end
-end
-
--- Получение текущего угла для игрока
-function ultimate.GetResolverAIAngle(ply)
-    if not ultimate.cfg.vars["Resolver AI"] then return nil end
-    if not IsValid(ply) then return nil end
-    
-    local data = InitPlayerData(ply)
-    local angleData = ultimate.resolverAI.angles[data.currentAngle]
-    
-    return angleData.yaw, angleData.pitch
-end
-
--- Хук на попадание
-hook_Add("EntityTakeDamage", "ResolverAI_Hit", function(target, dmg)
-    if not ultimate.cfg.vars["Resolver AI"] then return end
-    if not IsValid(target) or not target:IsPlayer() then return end
-    
-    local attacker = dmg:GetAttacker()
-    if attacker == me then
-        UpdateStats(target, true)
-    end
-end)
-
--- Хук на промах (вызывается из основного кода)
-function ultimate.ResolverAI_Miss(ply)
-    if not ultimate.cfg.vars["Resolver AI"] then return end
-    if not IsValid(ply) then return end
-    
-    UpdateStats(ply, false)
-end
-
--- ESP логи возле игрока
-hook_Add("HUDPaint", "ResolverAI_ESP", function()
-    if not ultimate.cfg.vars["Resolver AI"] then return end
-    if not ultimate.cfg.vars["Resolver AI show logs"] then return end
-    
-    for _, ply in ipairs(player_GetAll()) do
-        if ply == me then continue end
-        if not ply:Alive() then continue end
-        
-        local data = ultimate.resolverAI.playerData[ply:SteamID64()]
-        if not data then continue end
-        
-        local pos = ply:GetPos() + Vector(0, 0, 80)
-        local scrPos = pos:ToScreen()
-        
-        if not scrPos.visible then continue end
-        
-        local x, y = scrPos.x, scrPos.y
-        
-        -- Текущий угол
-        local currentAngle = ultimate.resolverAI.angles[data.currentAngle]
-        local angleText = "Angle: " .. currentAngle.name
-        local stats = data.angleStats[data.currentAngle]
-        local successRate = math_Round(stats.successRate * 100, 1)
-        
-        surface_SetFont("ultimate_font_1")
-        
-        -- Фон
-        local tw, th = surface_GetTextSize(angleText)
-        surface_SimpleRect(x - tw/2 - 4, y - 2, tw + 8, th + 4, Color(0, 0, 0, 180))
-        
-        -- Текст угла
-        surface_SimpleText(x - tw/2, y, angleText, Color(255, 255, 255))
-        y = y + th + 2
-        
-        -- Статистика
-        local statsText = string_format("H:%d M:%d (%.1f%%)", data.hitCount, data.missCount, successRate)
-        tw, th = surface_GetTextSize(statsText)
-        surface_SimpleRect(x - tw/2 - 4, y - 2, tw + 8, th + 4, Color(0, 0, 0, 180))
-        surface_SimpleText(x - tw/2, y, statsText, Color(100, 255, 100))
-        y = y + th + 4
-        
-        -- Логи
-        for i, log in ipairs(data.logs) do
-            if CurTime() - log.time > 3 then
-                log.alpha = math_max(0, log.alpha - 5)
-            end
-            
-            if log.alpha > 0 then
-                local logColor = ColorAlpha(log.color, log.alpha)
-                tw, th = surface_GetTextSize(log.text)
-                surface_SimpleRect(x - tw/2 - 4, y - 2, tw + 8, th + 4, Color(0, 0, 0, log.alpha * 0.7))
-                surface_SimpleText(x - tw/2, y, log.text, logColor)
-                y = y + th + 2
-            end
-        end
-    end
-end)
-
--- Интеграция с основным резольвером
-hook_Add("CreateMove", "ResolverAI_Apply", function(cmd)
-    if not ultimate.cfg.vars["Resolver AI"] then return end
-    
-    for _, ply in ipairs(player_GetAll()) do
-        if ply == me then continue end
-        if not ply:Alive() then continue end
-        
-        local yaw, pitch = ultimate.GetResolverAIAngle(ply)
-        if yaw then
-            -- Применяем угол к резольверу
-            ply.resolverAI_yaw = yaw
-            ply.resolverAI_pitch = pitch
-        end
-    end
-end)
