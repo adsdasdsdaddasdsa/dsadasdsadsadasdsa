@@ -5646,12 +5646,12 @@ function ultimate.GetSortedPlayers( mode, selfpred, plypred, vischeck )
 
         if v == me then continue end
         if not v:Alive() or v:IsDormant() then continue end
-        if ultimate.cfg.vars["Ignores-Bots"] and v:IsBot() then continue end 
+        if ultimate.cfg.vars["Ignores-Bots"] and v:IsBot() then continue end
         if ultimate.cfg.vars["Ignores-Friends"] and ultimate.cfg.friends[v:SteamID64()] then continue end
-        if ultimate.cfg.vars["Ignores-Steam friends"] and v:GetFriendStatus() == "friend" then continue end 
-        if ultimate.cfg.vars["Ignores-Admins"] and v:IsAdmin() then continue end 
-        if ultimate.cfg.vars["Ignores-Frozen"] and v:IsFlagSet( FL_FROZEN ) then continue end 
-        if ultimate.cfg.vars["Ignores-Nodraw"] and v:IsEffectActive( EF_NODRAW ) then continue end 
+        if ultimate.cfg.vars["Ignores-Steam friends"] and v:GetFriendStatus() == "friend" then continue end
+        if ultimate.cfg.vars["Ignores-Admins"] and v:IsAdmin() then continue end
+        if ultimate.cfg.vars["Ignores-Frozen"] and v:IsFlagSet( FL_FROZEN ) then continue end
+        if ultimate.cfg.vars["Ignores-Nodraw"] and v:IsEffectActive( EF_NODRAW ) then continue end
         if ultimate.cfg.vars["Ignores-God time"] and (type(v.HasGodMode) == "function" and v:HasGodMode()) then continue end 
         if ultimate.cfg.vars["Ignores-Driver"] and v:InVehicle() then continue end 
 
@@ -11232,8 +11232,8 @@ end
 function ultimate.PrePlayerDraw(ply, flags)
 	
 	if ultimate.cfg.vars["taunt_disabler"] then
-        pEntity:AnimResetGestureSlot( GESTURE_SLOT_VCD )
-        pEntity:AnimResetGestureSlot( GESTURE_SLOT_CUSTOM )
+        ply:AnimResetGestureSlot( GESTURE_SLOT_VCD )
+        ply:AnimResetGestureSlot( GESTURE_SLOT_CUSTOM )
     end
     if ultimate.cfg.vars["Taunt resolver"] and ply != me then
         ply:AnimResetGestureSlot(GESTURE_SLOT_VCD)
@@ -11723,13 +11723,28 @@ function ultimate.player_hurt(data)
 
 	if attackerid == me:UserID() then
 
-        if ultimate.cfg.vars["On screen logs"] then
-            local hlcolor = string_ToColor(ultimate.cfg.colors["On screen logs"])
-            table.insert(ultimate.onScreenLogs, {
+        if ultimate.cfg.vars[ "On screen logs" ] then
+            local hlcolor = string_ToColor( ultimate.cfg.colors[ "On screen logs" ] )
+            local data = {
                 tick = engine.TickCount(),
-                { "Hit ", hurted:Name(), " for ", data.health, " damage" },
-                { ultimate.HitLogsWhite, hlcolor, ultimate.HitLogsWhite, hlcolor, ultimate.HitLogsWhite, hlcolor, ultimate.HitLogsWhite }
-            })
+                {
+                    "Hit ",
+                    hurted:Name(),
+                    " for ",
+                    hurted:Health() - health,
+                    " damage"
+                },
+                {
+                    ultimate.HitLogsWhite,
+                    hlcolor,
+                    ultimate.HitLogsWhite,
+                    hlcolor,
+                    ultimate.HitLogsWhite,
+                }
+            }
+
+            ultimate.onScreenLogs[ engine.TickCount() ] = data
+            //print( "hurt", engine.TickCount() )
         end
 
         if ultimate.cfg.vars["Hitmarker"] then
@@ -13671,12 +13686,13 @@ GAMEMODE["EntityFireBullets"] = function( self, p, data )
         end
 
         local hlcolor = string_ToColor( ultimate.cfg.colors[ ultimate.MissReasons[ reason ].var ] )
-        local log_data = {
+        local data = {
             tick = tick,
-            { "Missed ", ultimate.target:Name(), " in head due to ", ultimate.MissReasons[ reason ].str },
-            { ultimate.HitLogsWhite, hlcolor, ultimate.HitLogsWhite, hlcolor }
+            { "Shot at ", ultimate.target:Name(), " missed due to ", ultimate.MissReasons[ reason ].str, },
+            { ultimate.HitLogsWhite, hlcolor, ultimate.HitLogsWhite, hlcolor, }
         }
-        ultimate.onScreenLogs[ tick ] = log_data
+
+        ultimate.onScreenLogs[ tick ] = data
     end
 
     local spread = data.Spread * -1
