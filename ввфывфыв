@@ -194,11 +194,6 @@ local traceResult = {}
 local traceStruct = { output = traceResult }
 local flTickInterval = engine.TickInterval()
 
--- тут не трогать это причина дисконнекта 
-concommand.Add("disconnect", function(ply, cmd, args)
-    RunConsoleCommand("disconnect", "XOMYTbI.EXE") 
-end)
-
 // custom funcs
 
 local function surface_SimpleRect(x,y,w,h,c)
@@ -1110,7 +1105,7 @@ ultimate.cfg.vars["Hitnumbers"] = false
 
 ultimate.cfg.vars["Hitsound"] = false
 ultimate.cfg.vars["Killsound"] = false
-ultimate.cfg.vars["Killstreak"] = ultimate.cfg.vars["Killstreak"] or false
+ultimate.cfg.vars["Killstreak"] = false
 
 ultimate.cfg.vars["Hitsound str"] = "phx/hmetal1.wav"
 ultimate.cfg.vars["Killsound str"] = "ambient/levels/canals/windchime2.wav"
@@ -1138,9 +1133,6 @@ ultimate.cfg.vars["Spectator list"] = false
 ultimate.cfg.vars["WaterMark"] = true
 ultimate.cfg.vars["WaterMark1"] = 3
 ultimate.cfg.colors["WaterMark"]    = "191 128 255 255"
-
-ultimate.cfg.vars["Killsound"] = false
-
 // World
 ultimate.cfg.vars["Custom sky"] = GetConVar("sv_skyname"):GetString()
 ultimate.cfg.vars["Sky color"] = false
@@ -3462,7 +3454,7 @@ ultimate.spfuncs[30] = function()
 
 end
 
-ultimate.spfuncs[1337] = function()
+ultimate.spfuncs[1338] = function()
     ultimate.ui.SettingsPan:SetSize(250,200)
 
     ultimate.ui.CheckBox( ultimate.ui.SettingsPan, "On Aimbot", "Norecoil on aimbot" )
@@ -3511,7 +3503,7 @@ function ultimate.tabs.Aimbot()
 
     local p = ultimate.itemPanel( "Accuracy", 2, 85 ):GetItemPanel()
 
-    ultimate.ui.CheckBox( p, "Compensate recoil", "Norecoil" ,false, false, false, ultimate.spfuncs[1337])
+    ultimate.ui.CheckBox( p, "Compensate recoil", "Norecoil" ,false, false, false, ultimate.spfuncs[1338])
     ultimate.ui.CheckBox( p, "Compensate spread", "Nospread", "Supported HL2, M9K, FAS2, CW2, SWB", false, false, ultimate.spfuncs[30] )
 
     local p = ultimate.itemPanel("Knife bot",2,180):GetItemPanel()
@@ -4286,7 +4278,7 @@ function ultimate.tabs.Misc()
     ultimate.ui.Slider( p, "Delay", "Chat delay", 0,20,0 )
 
     ultimate.ui.CheckBox( p, "Killsay", "Killsay" )
-    ultimate.ui.ComboBox( p, "Mode", "Killsay mode", {"угар","тохс","изи","зофтим" })
+    ultimate.ui.ComboBox( p, "Mode", "Killsay mode", {"угар","тохс","изи","зофтим"})
     ultimate.ui.ComboBox( p, "Group", "Killsay group", { "Default", "OOC", "Advert", "PM", "ULX" })
 
     ultimate.itemPanelB( "Net / Cvar", 3, 225, func )
