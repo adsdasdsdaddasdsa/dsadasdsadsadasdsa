@@ -1,4 +1,4 @@
-require("zxcmodule")
+require("xxxvideos")
 
 if not ded then return end
 
@@ -194,6 +194,7 @@ local traceResult = {}
 local traceStruct = { output = traceResult }
 local flTickInterval = engine.TickInterval()
 
+local baseyaw = 0
 // custom funcs
 
 local function surface_SimpleRect(x,y,w,h,c)
@@ -641,7 +642,10 @@ ultimate.cfg.vars["Aimbot marker"]                   = false
 ultimate.cfg.vars["Aimbot marker mode"]              = 1
 ultimate.cfg.colors["Aimbot marker"]                 = "255 255 255 255"
 
-
+// auto use gun section
+ultimate.cfg.vars["Auto Use Gun"]               = false
+ultimate.cfg.vars["Mode Use Gun"]               = 1
+ultimate.cfg.vars["Delay Use Gun"]              = 1
 
 ultimate.cfg.vars["Trigger bot"]                = false
 ultimate.cfg.binds["Trigger bot"]               = 0
@@ -3514,10 +3518,13 @@ function ultimate.tabs.Aimbot()
     ultimate.ui.ComboBox( p, "Knifebot mode", "Knifebot mode"  )
     ultimate.ui.CheckBox( p, "Facestab", "Facestab" )
 
-    local p = ultimate.itemPanel( "Misc", 2, 95 ):GetItemPanel()
+    local p = ultimate.itemPanel( "Misc", 2, 195 ):GetItemPanel()
 
     ultimate.ui.CheckBox( p, "Auto detonator", "Auto detonator" )
     ultimate.ui.Slider( p, "Detonation distance", "AutoD distance", 16, 128, 0 )
+    ultimate.ui.CheckBox( p, "Auto Use Gun", "Auto Use Gun")
+    ultimate.ui.ComboBox( p, "Mode Use Gun", "Mode Use Gun", {"dragunov", "svt40", "minigun"})
+    ultimate.ui.Slider( p, "Delay Use Gun", "Delay Use Gun", 0, 3, 0)
 
     local p = ultimate.itemPanel( "Target selection", 3, 175 ):GetItemPanel()
 
@@ -7138,8 +7145,6 @@ ultimate.realAngle = me:EyeAngles()
 ultimate.inverted = false
 ultimate.oldYaw = 0
 ultimate.SwaySide = 1
-
-local baseyaw = 0
 
 ultimate.CalcYaw = {
     [1] = function(cmd) return baseyaw - 178 end,
@@ -10986,6 +10991,39 @@ function ultimate.entity_killed(data)
     end
 end
 
+local im_dead = false
+hook.Add("Think", "avtouzegan_on_spavn", function()
+    local ply = LocalPlayer()
+    if not IsValid(ply) then return end
+
+    local hp = ply:Health()
+    local alive = ply:Alive()
+
+    if not alive or hp <= 0 then
+        im_dead = true
+    end
+
+    if im_dead and alive and hp > 0 then
+        im_dead = false
+        if ultimate.cfg.vars["Auto Use Gun"] then
+            local delay = ultimate.cfg.vars["Delay Use Gun"] or 0.5
+            local mode = ultimate.cfg.vars["Mode Use Gun"]
+
+            timer.Simple(delay, function()
+                if not IsValid(ply) or not ply:Alive() then return end
+                
+                if mode == 1 then
+                    RunConsoleCommand("use", "m9k_svu")
+                elseif mode == 2 then
+                    RunConsoleCommand("use", "m9k_svt40")
+                elseif mode == 3 then
+                    RunConsoleCommand("use", "m9k_minigun")
+                end
+            end)
+        end
+    end
+end)
+
 hook.Add("entity_killed", "ultimate_reset_killstreak", function(data)
     local vid = Entity(data.entindex_killed)
     if vid == me then
@@ -12486,7 +12524,6 @@ ultimate.AddHook( "PostDrawTranslucentRenderables" )
 ultimate.AddHook( "PreRender",                        ultimate.PreRender )
 ultimate.AddHook( "PostRender",                       ultimate.PostRender )
 ultimate.AddHook( "PreDrawHUD",                       ultimate.PostRender )
-
 ultimate.AddHook( "PrePlayerDraw" )
 
 ultimate.AddHook( "OnEntityCreated" )
