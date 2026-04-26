@@ -971,6 +971,8 @@ ultimate.cfg.vars["Distance"] = false
 ultimate.cfg.vars["Distance pos"] = 2
 ultimate.cfg.vars["Typing"] = false
 ultimate.cfg.vars["Typing pos"] = 1
+ultimate.cfg.vars["Priority ESP"] = false
+ultimate.cfg.vars["Priority ESP pos"] = 3
 ultimate.cfg.vars["Show Priority"]  = false
 ultimate.cfg.vars["Priority box"]  = false
 ultimate.cfg.vars["Show Priority pos"] = 1
@@ -3861,6 +3863,13 @@ ultimate.spfuncs[4444] = function( p )
     ultimate.ui.CheckBox( p, "Armor", "Armor", false, false, true, ultimate.spfuncs[666], false, function(p) local lbl, drop = ultimate.ui.ComboBox( p, "", "Armor pos", {"Up","Down","Right","Left"} ) lbl:Remove() drop:Dock(RIGHT) drop:DockMargin(3,0,0,0) ultimate.ui.ColorPicker( "Armor bar gradient", p ) end )
     ultimate.ui.CheckBox( p, "Weapon", "Weapon", false, false, false, ultimate.spfuncs[33], false, function(p) local lbl, drop = ultimate.ui.ComboBox( p, "", "Weapon pos", {"Up","Down","Right","Left"} ) lbl:Remove() drop:Dock(RIGHT) drop:DockMargin(3,0,0,0) end )
     ultimate.ui.CheckBox( p, "Team", "Team", false, false, false, false, false, function(p) local lbl, drop = ultimate.ui.ComboBox( p, "", "Team pos", {"Up","Down","Right","Left"} ) lbl:Remove() drop:Dock(RIGHT) drop:DockMargin(0,0,0,0) end )
+    ultimate.ui.CheckBox( p, "Priority Indicator", "Priority ESP", false, false, false, false, false, function(p) 
+    local lbl, drop = ultimate.ui.ComboBox( p, "", "Priority ESP pos", {"Up","Down","Right","Left"} ) 
+    lbl:Remove() 
+    drop:SetWide(60)
+    drop:Dock(RIGHT) 
+    drop:DockMargin(0,0,0,0) 
+    end )
     ultimate.ui.CheckBox( p, "Money", "DarkRP Money", false, false, false, false, false, function(p) local lbl, drop = ultimate.ui.ComboBox( p, "", "Money pos", {"Up","Down","Right","Left"} ) lbl:Remove() drop:Dock(RIGHT) drop:DockMargin(0,0,0,0) end )
     ultimate.ui.CheckBox( p, "Lag compensation", "Break LC", false, false, false, false, false, function(p) local lbl, drop = ultimate.ui.ComboBox( p, "", "Break LC pos", {"Up","Down","Right","Left"} ) lbl:Remove() drop:Dock(RIGHT) drop:DockMargin(0,0,0,0) end )
     ultimate.ui.CheckBox( p, "Packets ( Fake lag )", "Simtime updated", false, false, false, false, false, function(p) local lbl, drop = ultimate.ui.ComboBox( p, "", "Simtime pos", {"Up","Down","Right","Left"} ) lbl:Remove() drop:Dock(RIGHT) drop:DockMargin(0,0,0,0) end )
@@ -3997,7 +4006,7 @@ function ultimate.tabs.Visuals()
         ultimate.ui.MTButton( p, "ESP", ultimate.spfuncs[4444] )
     end
 
-    ultimate.itemPanelB( "Player", 1, 400, func )
+    ultimate.itemPanelB( "Player", 1, 420, func )
 
     local p = ultimate.itemPanel( "Misc", 1, 265 ):GetItemPanel()
 
@@ -4701,10 +4710,8 @@ end
 
 // cm stuff
 
-// cm stuff
-
-ultimate.target             = false  
-ultimate.aimingrn           = false 
+ultimate.target             = false
+ultimate.aimingrn           = false
 
 ultimate.targetVector       = Vector()
 ultimate.predictedVector    = Vector()
@@ -4733,148 +4740,278 @@ ultimate.m9kMaxRicochet     = { ["SniperPenetratedRound"] = 10, ["pistol"] = 2, 
 ultimate.m9kCanRicochet     = { ["SniperPenetratedRound"] = true, ["pistol"] = true, ["buckshot"] = true, ["slam"] = true }
 ultimate.m9kPenMaterial     = { [MAT_GLASS] = true, [MAT_PLASTIC] = true, [MAT_WOOD] = true, [MAT_FLESH] = true, [MAT_ALIENFLESH] = true }
 
-ultimate.activeWeapon       = false 
-ultimate.activeWeaponClass  = false 
-ultimate.moveType           = me:GetMoveType() 
+ultimate.activeWeapon       = false
+ultimate.activeWeaponClass  = false
+ultimate.moveType           = me:GetMoveType()
 
 ultimate.myaw               = GetConVar("m_yaw"):GetFloat()
 
 ultimate.backtracktick      = 0
 
-function ultimate.AutoWall( dir, plyTarget )
-	if not ultimate.activeWeapon or ultimate.swbShit[ ultimate.activeWeaponClass ] then return false end
+function ultimate.AutoWall(dir, plyTarget)
+    if not ultimate.activeWeapon then return false end
 
-	local eyePos = pLocalPlayer:EyePos()
-	local ignoreHeadOnly = ultimate.cfg.vars["Ignores-Head unhitable"]
+    local eyePos = me:EyePos()
+    local weaponClass = ultimate.activeWeaponClass
 
-	local function IsTargetHit( tr )
-		if ignoreHeadOnly then
-			return tr.Entity == plyTarget and tr.HitGroup == 1
-		else
-			return tr.Entity == plyTarget
-		end
-	end
+    local weaponType = "unknown"
+    if weaponClass:find("m9k_") then
+        weaponType = "m9k"
+    elseif weaponClass:find("swb_") or ultimate.swbShit[weaponClass] then
+        weaponType = "swb"
+    end
 
-	local function DoTrace( startPos, endPos, mask )
-		ultimate.traceStruct.start = startPos
-		ultimate.traceStruct.endpos = endPos
-		ultimate.traceStruct.filter = pLocalPlayer
-		ultimate.traceStruct.mask = mask
-		return util.TraceLine( ultimate.traceStruct )
-	end
+    local function UniversalAutowall()
+        local maxDistance = 32768
+        local penetrationPower = 3
 
-	local function SWBAutowall()
-		local tr = DoTrace( eyePos, eyePos + dir * ultimate.activeWeapon.PenetrativeRange, ultimate.swbNormal )
+        if ultimate.activeWeapon.Primary and ultimate.activeWeapon.Primary.Damage then
+            if ultimate.activeWeapon.Primary.Damage > 50 then
+                penetrationPower = 5
+            elseif ultimate.activeWeapon.Primary.Damage > 30 then
+                penetrationPower = 4
+            end
+        end
 
-		if not tr.Hit or tr.HitSky then return false end
+        local function TraceThroughWalls(startPos, direction, maxPenetrations, currentPen)
+            if currentPen > maxPenetrations then return false end
 
-		local dot = -dir:Dot( tr.HitNormal )
-		if not ultimate.activeWeapon.CanPenetrate or dot <= 0.26 then return false end
+            ultimate.traceStruct.start = startPos
+            ultimate.traceStruct.endpos = startPos + direction * maxDistance
+            ultimate.traceStruct.filter = me
+            ultimate.traceStruct.mask = MASK_SHOT
 
-		local penDepth = ultimate.activeWeapon.PenStr * ( ultimate.swbPen[tr.MatType] or 1 ) * ultimate.activeWeapon.PenMod
+            local tr = util.TraceLine(ultimate.traceStruct)
 
-		tr = DoTrace( tr.HitPos, tr.HitPos + dir * penDepth, ultimate.swbWall )
+            if tr.Hit and not tr.HitSky then
+                if tr.Entity == plyTarget then
+                    if ultimate.cfg.vars["Ignores-Head unhitable"] then
+                        return tr.HitGroup == 1
+                    else
+                        return true
+                    end
+                end
 
-		tr = DoTrace( tr.HitPos, tr.HitPos + dir * 0.1, ultimate.swbNormal )
-		if tr.Hit then return false end
+                local canPenetrate = false
+                local penetrationDistance = 0
 
-		tr = DoTrace( tr.HitPos, tr.HitPos + dir * 32768, MASK_SHOT )
-		return IsTargetHit( tr )
-	end
+                if tr.MatType == MAT_GLASS or tr.MatType == MAT_WOOD or tr.MatType == MAT_PLASTIC then
+                    canPenetrate = true
+                    penetrationDistance = 50
+                elseif tr.MatType == MAT_CONCRETE or tr.MatType == MAT_METAL then
+                    if penetrationPower >= 4 then
+                        canPenetrate = true
+                        penetrationDistance = 30
+                    end
+                elseif tr.MatType == MAT_FLESH or tr.MatType == MAT_ALIENFLESH then
+                    canPenetrate = true
+                    penetrationDistance = 20
+                end
 
-	local function M9KAutowall()
-		local penetrate_cvar = GetConVar( "M9KDisablePenetration" )
-		if IsValid( penetrate_cvar ) and penetrate_cvar:GetBool() then
-			return false
-		end
+                if canPenetrate and currentPen < maxPenetrations then
+                    local newStart = tr.HitPos + direction * penetrationDistance
+                    return TraceThroughWalls(newStart, direction, maxPenetrations, currentPen + 1)
+                end
+            end
 
-		if not ultimate.activeWeapon.Penetration then
-			return false
-		end
+            return false
+        end
 
-		local function GetDamageMultiplier( matType, ammoType )
-			if ammoType == "SniperPenetratedRound" then
-				return 1
-			elseif matType == MAT_CONCRETE or matType == MAT_METAL then
-				return 0.3
-			elseif matType == MAT_WOOD or matType == MAT_PLASTIC or matType == MAT_GLASS then
-				return 0.8
-			elseif matType == MAT_FLESH or matType == MAT_ALIENFLESH then
-				return 0.9
-			end
-			return 0.5
-		end
+        return TraceThroughWalls(eyePos, dir, penetrationPower, 0)
+    end
 
-		local function BulletPenetrate( tr, bounceNum, damage )
-			if damage < 1 or tr.Fraction <= 0 then
-				return false
-			end
+    local function ImprovedSWBAutowall()
+        if ultimate.swbShit[weaponClass] then return false end
 
-			local ammoType = ultimate.activeWeapon.Primary.Ammo
-			local maxPenetration = ultimate.m9kPenetration[ ammoType ] or 14
-			local maxRicochet = ultimate.m9kMaxRicochet[ ammoType ] or 0
-			local canRicochet = ultimate.m9kCanRicochet[ ammoType ] or false
+        local range = ultimate.activeWeapon.PenetrativeRange or 32768
 
-			if tr.MatType == MAT_METAL and canRicochet and ammoType != "SniperPenetratedRound" then
-				return false
-			end
+        ultimate.traceStruct.start = eyePos
+        ultimate.traceStruct.endpos = eyePos + dir * range
+        ultimate.traceStruct.filter = me
+        ultimate.traceStruct.mask = ultimate.swbNormal or MASK_SHOT
 
-			if bounceNum > maxRicochet then
-				return false
-			end
+        local tr = util.TraceLine(ultimate.traceStruct)
 
-			local penDepth = maxPenetration
-			if ultimate.m9kPenMaterial[ tr.MatType ] then
-				penDepth = maxPenetration * 2
-			end
-			local penetrationDir = tr.Normal * penDepth
+        if tr.Hit and not tr.HitSky then
+            local dot = -dir:Dot(tr.HitNormal)
 
-			local trace = DoTrace( tr.HitPos + penetrationDir, tr.HitPos, MASK_SHOT )
+            local minDot = 0.2
+            local canPenetrate = ultimate.activeWeapon.CanPenetrate
 
-			if trace.StartSolid or trace.Fraction >= 1 then
-				return false
-			end
+            if not canPenetrate then
+                if weaponClass:find("sniper") or weaponClass:find("rifle") then
+                    canPenetrate = true
+                    minDot = 0.15
+                end
+            end
 
-			local penTrace = DoTrace( trace.HitPos, trace.HitPos + tr.Normal * 32768, MASK_SHOT )
+            if canPenetrate and dot > minDot then
+                local penStr = ultimate.activeWeapon.PenStr or 100
+                local penMod = ultimate.activeWeapon.PenMod or 1
+                local materialMultiplier = ultimate.swbPen[tr.MatType] or 1
 
-			if IsTargetHit( penTrace ) then
-				return true
-			end
+                ultimate.traceStruct.start = tr.HitPos
+                ultimate.traceStruct.endpos = tr.HitPos + dir * penStr * materialMultiplier * penMod
+                ultimate.traceStruct.filter = me
+                ultimate.traceStruct.mask = ultimate.swbWall or MASK_SHOT_HULL
 
-			local damageMulti = GetDamageMultiplier( tr.MatType, ammoType )
+                tr = util.TraceLine(ultimate.traceStruct)
 
-			local newBounceNum = bounceNum + 1
-			if penTrace.MatType == MAT_GLASS then
-				newBounceNum = bounceNum
-			end
+                ultimate.traceStruct.start = tr.HitPos
+                ultimate.traceStruct.endpos = tr.HitPos + dir * 5
+                ultimate.traceStruct.filter = me
+                ultimate.traceStruct.mask = ultimate.swbNormal or MASK_SHOT
 
-			return BulletPenetrate( penTrace, newBounceNum, damage * damageMulti )
-		end
+                tr = util.TraceLine(ultimate.traceStruct)
 
-		local trace = DoTrace( eyePos, eyePos + dir * 32768, MASK_SHOT )
-		return BulletPenetrate( trace, 0, ultimate.activeWeapon.Primary.Damage )
-	end
+                if tr.Hit then
+                    ultimate.traceStruct.start = tr.HitPos
+                    ultimate.traceStruct.endpos = tr.HitPos + dir * 10
+                    ultimate.traceStruct.filter = me
 
-	local weaponClass = ultimate.activeWeaponClass
+                    tr = util.TraceLine(ultimate.traceStruct)
+                end
 
-	if string.StartWith( weaponClass, "m9k_" ) or string.StartWith( weaponClass, "bender_" ) then
-		return M9KAutowall()
-	elseif string.StartWith( weaponClass, "swb_" ) then
-		return SWBAutowall()
-	end
+                ultimate.traceStruct.start = tr.HitPos
+                ultimate.traceStruct.endpos = tr.HitPos + dir * 32768
+                ultimate.traceStruct.filter = me
+                ultimate.traceStruct.mask = MASK_SHOT
 
-	return false
+                tr = util.TraceLine(ultimate.traceStruct)
+
+                if tr.Entity == plyTarget then
+                    if ultimate.cfg.vars["Ignores-Head unhitable"] then
+                        return tr.HitGroup == 1
+                    else
+                        return true
+                    end
+                end
+            end
+        end
+
+        return false
+    end
+
+    local function ImprovedM9KAutowall()
+        if not ultimate.activeWeapon.Penetration then
+            return UniversalAutowall()
+        end
+
+        local function BulletPenetrate(tr, bounceNum, damage)
+            if damage < 1 then return false end
+
+            local maxPenetration = 14
+            local maxRicochet = 0
+            local isRicochet = false
+
+            if ultimate.m9kPenetration[ultimate.activeWeapon.Primary.Ammo] then
+                maxPenetration = ultimate.m9kPenetration[ultimate.activeWeapon.Primary.Ammo]
+            end
+
+            if ultimate.m9kMaxRicochet[ultimate.activeWeapon.Primary.Ammo] then
+                maxRicochet = ultimate.m9kMaxRicochet[ultimate.activeWeapon.Primary.Ammo]
+            end
+
+            if ultimate.m9kCanRicochet[ultimate.activeWeapon.Primary.Ammo] then
+                isRicochet = ultimate.m9kCanRicochet[ultimate.activeWeapon.Primary.Ammo]
+            end
+
+            if tr.MatType == MAT_METAL and isRicochet then
+                if ultimate.activeWeapon.Primary.Ammo != "SniperPenetratedRound" then
+                    local angle = math.deg(math.acos(tr.HitNormal:Dot(dir)))
+                    if angle < 25 then
+                        return false
+                    end
+                end
+            end
+
+            if bounceNum > maxRicochet then return false end
+
+            local penetrationDir = tr.Normal * maxPenetration
+
+            local materialBoost = 1
+            if ultimate.m9kPenMaterial[tr.MatType] then
+                materialBoost = 2
+            elseif tr.MatType == MAT_GLASS or tr.MatType == MAT_WOOD then
+                materialBoost = 1.5
+            elseif tr.MatType == MAT_FLESH then
+                materialBoost = 0.8
+            end
+
+            penetrationDir = tr.Normal * (maxPenetration * materialBoost)
+
+            ultimate.traceStruct.endpos = tr.HitPos
+            ultimate.traceStruct.start = tr.HitPos + penetrationDir
+            ultimate.traceStruct.mask = MASK_SHOT
+            ultimate.traceStruct.filter = me
+
+            local trace = util.TraceLine(ultimate.traceStruct)
+
+            if trace.StartSolid or trace.Fraction >= 1 then
+                return false
+            end
+
+            ultimate.traceStruct.endpos = trace.HitPos + dir * 32768
+            ultimate.traceStruct.start = trace.HitPos
+            ultimate.traceStruct.mask = MASK_SHOT
+            ultimate.traceStruct.filter = me
+
+            local penTrace = util.TraceLine(ultimate.traceStruct)
+
+            if penTrace.Entity == plyTarget then
+                if ultimate.cfg.vars["Ignores-Head unhitable"] then
+                    return penTrace.HitGroup == 1
+                else
+                    return true
+                end
+            end
+
+            local damageMulti = 0.5
+            if ultimate.activeWeapon.Primary.Ammo == "SniperPenetratedRound" then
+                damageMulti = 0.8
+            elseif tr.MatType == MAT_CONCRETE or tr.MatType == MAT_METAL then
+                damageMulti = 0.4
+            elseif tr.MatType == MAT_WOOD or tr.MatType == MAT_PLASTIC then
+                damageMulti = 0.7
+            elseif tr.MatType == MAT_GLASS then
+                damageMulti = 0.9
+                bounceNum = bounceNum - 1
+            elseif tr.MatType == MAT_FLESH or tr.MatType == MAT_ALIENFLESH then
+                damageMulti = 0.6
+            end
+
+            return BulletPenetrate(penTrace, bounceNum + 1, damage * damageMulti)
+        end
+
+        ultimate.traceStruct.start = eyePos
+        ultimate.traceStruct.endpos = eyePos + dir * 32768
+        ultimate.traceStruct.filter = me
+        ultimate.traceStruct.mask = MASK_SHOT
+
+        local trace = util.TraceLine(ultimate.traceStruct)
+        local damage = ultimate.activeWeapon.Primary and ultimate.activeWeapon.Primary.Damage or 30
+
+        return BulletPenetrate(trace, 0, damage)
+    end
+
+    if weaponType == "m9k" then
+        return ImprovedM9KAutowall()
+    elseif weaponType == "swb" then
+        return ImprovedSWBAutowall()
+    else
+        return UniversalAutowall()
+    end
 end
 
 function ultimate.VisibleCheck( who, where, predticks, awalldir )
-    local start = pLocalPlayer:EyePos()
+    local start = me:EyePos()
 
-    if predticks then start = start + ( pLocalPlayer:GetVelocity() * flTickInterval ) * predticks end
+    if predticks then start = start + ( me:GetVelocity() * TickInterval ) * predticks end
 
     ultimate.traceStruct.start = start
 	ultimate.traceStruct.endpos = where
 	ultimate.traceStruct.mask = MASK_SHOT
-    ultimate.traceStruct.filter = pLocalPlayer
+    ultimate.traceStruct.filter = me
 
     local tr = TraceLine( ultimate.traceStruct )
 
@@ -6093,142 +6230,213 @@ function ultimate.CanStab(ent, pos, health)
     return false, false
 end
 
-function ultimate.PredictVelocityExtrapolate(vel, yaw, fmove, smove, accel, maxspeed)
-    local ang = Angle(0, yaw, 0)
-    local forward, right = ang:Forward(), ang:Right()
-    forward.z, right.z = 0, 0
-    forward:Normalize()
-    right:Normalize()
-
-    local wishdir = Vector(forward.x * fmove + right.x * smove, forward.y * fmove + right.y * smove, 0)
-    local wishspeed = wishdir:Length()
-    wishdir:Normalize()
-
-    if wishspeed ~= 0 and wishspeed > maxspeed then
-        wishspeed = maxspeed
-    end
-
-    local currentspeed = vel:Dot(wishdir)
-    local addspeed = math.min(wishspeed, 30) - currentspeed
-
-    if addspeed <= 0 then return end
-
-    local accelspeed = math.min(accel * wishspeed, addspeed)
-    vel.x = vel.x + wishdir.x * accelspeed
-    vel.y = vel.y + wishdir.y * accelspeed
+function ultimate.PredictVelocityExtrapolate( vel, yaw, fmove, smove, accel, maxspeed )
+	local viewangles = Angle( 0, yaw, 0 )
+	local forward = viewangles:Forward()
+	local right = viewangles:Right()
+	forward.z = 0
+	right.z = 0
+	forward:Normalize()
+	right:Normalize()
+	local wishdir = Vector( forward.x*fmove + right.x*smove, forward.y*fmove + right.y*smove, 0 )
+	local wishspeed = wishdir:Length()
+	wishdir:Normalize()
+	if ( wishspeed != 0 && wishspeed > maxspeed ) then
+		wishspeed = maxspeed
+	end
+	local wishspd = wishspeed
+	if ( wishspd > 30 ) then
+		wishspd = 30
+	end
+	local currentspeed = vel:Dot( wishdir )
+	local addspeed = wishspd - currentspeed
+	if ( addspeed <= 0 ) then
+		return
+	end
+	local accelspeed = accel * wishspeed
+	if ( accelspeed > addspeed ) then
+		accelspeed = addspeed
+	end
+	local newvel = wishdir * accelspeed
+	vel:Add( newvel )
 end
 
-function ultimate.FindBestAirAngle(vel_start, vel_end, sim_ticks, accel, maxspeed)
-    local strafe_type, best_angle = 0, 0
-    if sim_ticks <= 0 or sim_ticks > 24 then return strafe_type, best_angle end
-
-    local vel_delta = vel_end - vel_start
-    if vel_delta:Length2DSqr() < 0.01 then return strafe_type, best_angle end
-
-    local yaw_start = math.deg(math.atan2(vel_start.y, vel_start.x))
-    local yaw_end = math.deg(math.atan2(vel_end.y, vel_end.x))
-    local yaw_delta = math.NormalizeAngle(yaw_end - yaw_start)
-    local yaw_avg = math.NormalizeAngle(yaw_start + (yaw_delta * 0.5))
-
-    local smove = (yaw_delta > 0) and -10000 or 10000
-    local strafe_dir = (yaw_delta > 0) and 1 or 2
-    local min_diff = vel_delta:Length2DSqr()
-
-    for i = 1, 2 do
-        local angle = 0
-        local step = (i == 1) and 0.1 or -0.1
-        while math.abs(angle) <= 10 do
-            local p_vel = Vector(vel_start.x, vel_start.y, 0)
-            for j = 1, sim_ticks do
-                local p_yaw = math.NormalizeAngle(math.deg(math.atan2(p_vel.y, p_vel.x)) + angle)
-                ultimate.PredictVelocityExtrapolate(p_vel, p_yaw, 0, smove, accel, maxspeed)
-            end
-            local diff = (vel_end - p_vel):Length2DSqr()
-            if diff < min_diff then
-                min_diff = diff
-                strafe_type = strafe_dir
-                best_angle = angle
-            end
-            angle = angle + step
-        end
-    end
-    return strafe_type, best_angle
+function ultimate.FindBestAirAngle( vel_start, vel_end, sim_ticks, accel, maxspeed )
+    local find_air_angle_step = 0.1
+    local find_air_angle_limit = 10
+    local cl_forwardspeed = 10000
+    local cl_sidespeed = 10000
+    local STRAFE_NONE = 0
+    local STRAFE_LEFT = 1
+    local STRAFE_RIGHT = 2
+    local STRAFE_STRAIGHT = 3
+	local strafe_type = STRAFE_NONE
+	local best_angle = 0
+	if ( sim_ticks <= 0 || sim_ticks > 24 ) then
+		return strafe_type, best_angle
+	end
+	local vel_delta = vel_end - vel_start
+	local vel_delta_len_sqr = vel_delta:Length2DSqr()
+	if ( vel_delta_len_sqr < 0.01 ) then
+		return strafe_type, best_angle
+	end
+	local vel_yaw_start = math.NormalizeAngle( math.deg( math.atan2( vel_start.y, vel_start.x ) ) )
+	local vel_yaw_end = math.NormalizeAngle( math.deg( math.atan2( vel_end.y, vel_end.x ) ) )
+	local vel_yaw_delta = math.NormalizeAngle( vel_yaw_end - vel_yaw_start )
+	local vel_yaw_avg = math.NormalizeAngle( vel_yaw_start + ( vel_yaw_delta / 2 ) )
+	local fmove = 0
+	local smove = ( vel_yaw_delta > 0 ) && -cl_sidespeed || cl_sidespeed
+	local strafe_dir = ( vel_yaw_delta > 0 ) && STRAFE_LEFT || STRAFE_RIGHT
+	local angle_step = find_air_angle_step
+	local min_vel_delta_len_sqr = vel_delta_len_sqr
+	for i = 1, 2 do
+		local angle = 0
+		while ( math.abs( angle ) <= find_air_angle_limit ) do
+			local pred_vel = vel_start
+			for j = 1, sim_ticks do
+				local pred_vel_yaw = math.NormalizeAngle( math.deg( math.atan2( pred_vel.y, pred_vel.x ) ) + angle )
+				ultimate.PredictVelocityExtrapolate( pred_vel, pred_vel_yaw, fmove, smove, accel, maxspeed )
+			end
+			vel_delta = vel_end - pred_vel
+			vel_delta_len_sqr = vel_delta:Length2DSqr()
+			if ( vel_delta_len_sqr < min_vel_delta_len_sqr ) then
+				min_vel_delta_len_sqr = vel_delta_len_sqr
+				strafe_type = strafe_dir
+				best_angle = angle
+			end
+			angle = angle + angle_step
+		end
+		angle_step = angle_step * -1
+	end
+	for i = 1, 2 do
+		local angle = 0
+		while ( math.abs( angle ) <= find_air_angle_limit ) do
+			local pred_vel = vel_start
+			for j = 1, sim_ticks do
+				local pred_vel_yaw = math.NormalizeAngle( math.deg( math.atan2( pred_vel.y, pred_vel.x ) ) )
+				local pred_vel_yaw_delta = math.NormalizeAngle( vel_yaw_avg + angle - pred_vel_yaw )
+				smove = ( pred_vel_yaw_delta > 0 ) && -cl_sidespeed || cl_sidespeed
+				ultimate.PredictVelocityExtrapolate( pred_vel, pred_vel_yaw, fmove, smove, accel, maxspeed )
+			end
+			vel_delta = vel_end - pred_vel
+			vel_delta_len_sqr = vel_delta:Length2DSqr()
+			if ( vel_delta_len_sqr < min_vel_delta_len_sqr ) then
+				min_vel_delta_len_sqr = vel_delta_len_sqr
+				strafe_type = STRAFE_STRAIGHT
+				best_angle = vel_yaw_avg + angle
+			end
+			angle = angle + angle_step
+		end
+		angle_step = angle_step * -1
+	end
+	return strafe_type, best_angle
 end
 
-function ultimate.PredictMovementExtrapolate(target_ply, extrapolation_ticks)
-    local interval = engine.TickInterval()
-    local gravity = GetConVar("sv_gravity"):GetFloat() * interval
-    local accel = GetConVar("sv_airaccelerate"):GetFloat() * interval
-    local maxspeed = target_ply:GetMaxSpeed()
-    local jump_power = target_ply:GetJumpPower()
-    
-    local origin = target_ply:GetPos()
-    local velocity = target_ply:GetAbsVelocity()
-    local mins, maxs = target_ply:GetCollisionBounds()
-    local on_ground = target_ply:IsFlagSet(FL_ONGROUND)
-    local strafe_type = target_ply.m_nStrafeType or 0
-    local air_angle = target_ply.m_flAirAngle or 0
+local sv_airaccelerate = GetConVar( "sv_airaccelerate" )
 
-    for i = 1, extrapolation_ticks do
-        velocity.z = velocity.z - (gravity * 0.5)
-
-        if on_ground then
-            velocity.z = velocity.z + jump_power
-            on_ground = false
-        end
-
-        local smove = 0
-        if strafe_type == 1 then smove = -10000 elseif strafe_type == 2 then smove = 10000 end
-        
-        local cur_yaw = math.deg(math.atan2(velocity.y, velocity.x))
-        if strafe_type == 3 then
-            local delta = math.NormalizeAngle(air_angle - cur_yaw)
-            smove = (delta > 0) and -10000 or 10000
-        else
-            cur_yaw = cur_yaw + air_angle
-        end
-
-        ultimate.PredictVelocityExtrapolate(velocity, cur_yaw, 0, smove, accel, maxspeed)
-
-        local move = velocity * interval
-        local tr = util.TraceHull({
-            start = origin, endpos = origin + move,
-            maxs = maxs, mins = mins,
-            filter = target_ply, mask = MASK_PLAYERSOLID
-        })
-
-        if tr.Fraction < 1 then
-            local step_tr = util.TraceHull({
-                start = origin + Vector(0, 0, 18), endpos = origin + move + Vector(0, 0, 18),
-                maxs = maxs, mins = mins,
-                filter = target_ply, mask = MASK_PLAYERSOLID
-            })
-            if step_tr.Fraction > tr.Fraction then
-                local down_tr = util.TraceHull({
-                    start = step_tr.HitPos, endpos = step_tr.HitPos - Vector(0, 0, 18),
-                    maxs = maxs, mins = mins,
-                    filter = target_ply, mask = MASK_PLAYERSOLID
-                })
-                origin = down_tr.HitPos
-            else
-                local dot = velocity:Dot(tr.HitNormal)
-                velocity = velocity - (tr.HitNormal * dot)
-                origin = tr.HitPos
-            end
-        else
-            origin = tr.HitPos
-        end
-
-        velocity.z = velocity.z - (gravity * 0.5)
-        local ground_tr = util.TraceHull({
-            start = origin + Vector(0, 0, 1), endpos = origin - Vector(0, 0, 2),
-            maxs = maxs, mins = mins,
-            filter = target_ply, mask = MASK_PLAYERSOLID
-        })
-        on_ground = ground_tr.Hit and ground_tr.HitNormal.z >= 0.7
-        if on_ground then velocity.z = 0 end
-    end
-    return origin
+function ultimate.PredictMovementExtrapolate( target_ply, extrapolation_ticks )
+    local sv_gravity = GetConVar( "sv_gravity" )
+    local sv_sticktoground = GetConVar( "sv_sticktoground" )
+	local pm
+	local vel_yaw
+	local vel_yaw_delta
+	local frametime = TickInterval
+	local maxspeed = target_ply:GetMaxSpeed()
+	local jump_power = target_ply:GetJumpPower()
+	local accel = sv_airaccelerate:GetFloat() * frametime
+	local half_gravity = sv_gravity:GetFloat() * frametime * 0.5
+	local stick_to_ground = sv_sticktoground:GetBool()
+	local origin = target_ply:GetPos()
+	local velocity = target_ply:GetAbsVelocity()
+	local mins, maxs = target_ply:GetCollisionBounds()
+	local on_ground = target_ply:IsFlagSet( FL_ONGROUND )
+	local ducking = target_ply:IsFlagSet( FL_DUCKING )
+	local strafe_type = target_ply.m_nStrafeType
+	local angle = target_ply.m_flAirAngle
+	local fmove = 0
+	local smove
+	if ( strafe_type == STRAFE_LEFT ) then
+		smove = -cl_sidespeed
+	elseif ( strafe_type == STRAFE_RIGHT ) then
+		smove = cl_sidespeed
+	else
+		smove = 0
+	end
+	for i = 1, extrapolation_ticks do
+		velocity.z = velocity.z - half_gravity
+		if ( on_ground ) then
+			if ( ducking ) then
+				velocity.z = jump_power
+			else
+				velocity.z = velocity.z + jump_power
+			end
+			velocity.z = velocity.z - half_gravity
+		end
+		if ( strafe_type == STRAFE_STRAIGHT ) then
+			vel_yaw = math.NormalizeAngle( math.deg( math.atan2( velocity.y, velocity.x ) ) )
+			vel_yaw_delta = math.NormalizeAngle( angle - vel_yaw )
+			smove = ( vel_yaw_delta > 0 ) && -cl_sidespeed || cl_sidespeed
+		else
+			vel_yaw = math.NormalizeAngle( math.deg( math.atan2( velocity.y, velocity.x ) ) + angle )
+		end
+		ultimate.PredictVelocityExtrapolate( velocity, vel_yaw, fmove, smove, accel, maxspeed )
+		local endpos = origin + ( velocity * frametime )
+		pm = util.TraceHull( {
+			start = origin,
+			endpos = endpos,
+			maxs = maxs,
+			mins = mins,
+			filter = target_ply,
+			mask = MASK_PLAYERSOLID,
+			collisiongroup = COLLISION_GROUP_PLAYER_MOVEMENT
+		} )
+		if ( pm.Fraction != 1 ) then
+			local time_left = frametime
+			for j = 1, 2 do
+				time_left = time_left - ( time_left * pm.Fraction )
+				local dot = velocity:Dot( pm.HitNormal )
+				velocity = velocity - ( pm.HitNormal * dot )
+				dot = velocity:Dot( pm.HitNormal )
+				if ( dot < 0 ) then
+					velocity = velocity - ( pm.HitNormal * dot )
+				end
+				endpos = pm.HitPos + ( velocity * time_left )
+				pm = util.TraceHull( {
+					start = pm.HitPos,
+					endpos = endpos,
+					maxs = maxs,
+					mins = mins,
+					filter = target_ply,
+					mask = MASK_PLAYERSOLID,
+					collisiongroup = COLLISION_GROUP_PLAYER_MOVEMENT
+				} )
+				if ( pm.Fraction == 1 ) then
+					break
+				end
+			end
+		end
+		origin = pm.HitPos
+		if ( !stick_to_ground && velocity.z > 140 ) then
+			on_ground = false
+		else
+			pm = util.TraceHull( {
+				start =  Vector( origin.x, origin.y, origin.z + 2 ),
+				endpos = Vector( origin.x, origin.y, origin.z - 1 ),
+				maxs = Vector( maxs.x, maxs.y, maxs.z * 0.5 ),
+				mins = mins,
+				filter = target_ply,
+				mask = MASK_PLAYERSOLID,
+				collisiongroup = COLLISION_GROUP_PLAYER_MOVEMENT
+			} )
+			on_ground = ( pm.Entity != NULL && pm.HitNormal.z >= 0.7 )
+		end
+		if ( on_ground ) then
+			velocity.z = 0
+		else
+			velocity.z = velocity.z - half_gravity
+		end
+	end
+	return origin
 end
 
 local gRustPred = false
@@ -6277,7 +6485,6 @@ function ultimate.Aim(cmd)
     local saved_pos = ply:GetPos()
     local extrapolated_pos = saved_pos
     local nullvelocity = ply:GetVelocity():Length() > 2
-    local sv_airaccelerate = GetConVar("sv_airaccelerate")
 
     if ultimate.cfg.vars["Extrapolation"] and ( !valid || ply.m_bBreaksLagCompensation ) and nullvelocity then
         if ply.m_needStrafeCalc and ply.m_nSimulationTicks and ply.m_nSimulationTicks > 0 then
@@ -7038,7 +7245,7 @@ function ultimate.GetBaseYaw()
         if ultimate.cfg.vars["Ignores-Admins"] and v:IsAdmin() then continue end
         if ultimate.cfg.vars["Ignores-Frozen"] and v:IsFlagSet( FL_FROZEN ) then continue end
         if ultimate.cfg.vars["Ignores-Nodraw"] and v:IsEffectActive( EF_NODRAW ) then continue end
-        if ultimate.cfg.vars["Ignores-God time"] and v:GetColor().a < 255 then continue end
+        if ultimate.cfg.vars["Ignores-God time"] and (type(v.HasGodMode) == "function" and v:HasGodMode()) then continue end 
         if ultimate.cfg.vars["Ignores-Driver"] and v:InVehicle() then continue end
 
         local iTeamLocal = ultimate.GetTeam( me )
@@ -7430,7 +7637,7 @@ do
             if ultimate.cfg.vars["Ignores-Admins"] and v:IsAdmin() then return false end
             if ultimate.cfg.vars["Ignores-Frozen"] and v:IsFlagSet( FL_FROZEN ) then return false end
             if ultimate.cfg.vars["Ignores-Nodraw"] and v:IsEffectActive( EF_NODRAW ) then return false end
-            if ultimate.cfg.vars["Ignores-God time"] and v:GetColor().a < 255 then return false end
+            if ultimate.cfg.vars["Ignores-God time"] and (type(v.HasGodMode) == "function" and v:HasGodMode()) then return false end 
             if ultimate.cfg.vars["Ignores-Driver"] and v:InVehicle() then return false end
 
             local iTeamLocal = ultimate.GetTeam( me )
@@ -7544,7 +7751,6 @@ end
 
 
 do
-
     local function shouldlag(cmd)
         if not ultimate.cfg.vars["Fake lag"] then return false end
         if not me:Alive() then return false end
@@ -7565,34 +7771,44 @@ do
         local factortest = ultimate.cfg.vars["Lag limit"]
 
         if ultimate.cfg.vars["Fake lag options-Randomise"] then
-            factor =  math_random(ultimate.cfg.vars["Lag randomisation"],factor)
+            factor = math_random(ultimate.cfg.vars["Lag randomisation"],factor)
         end
 
         local velocity = me:GetVelocity():Length2D()
         local pertick = velocity * TickInterval
         local adaptive_factor = math_Clamp(math_ceil(64 / pertick),1,factor)
 
-        if ultimate.cfg.vars["Lag mode"] == 1 or ultimate.cfg.vars["Lag mode"] == 3 then
-            ultimate.fakeLagfactor = factor
+        if ultimate.cfg.vars["Lag mode"] == 1 then
+            if velocity > 10 then
+                local interval = engine.TickInterval()
+                local ticks_to_break = math_ceil(64 / (velocity * interval))
+                factor = math_Clamp(ticks_to_break, 1, factor)
+                
+                if cmd:CommandNumber() % 3 == 0 then
+                    factor = math_random(math_max(1, factor - 2), factor)
+                end
+            else
+                factor = math_Clamp(factor, 1, 21)
+            end
         elseif ultimate.cfg.vars["Lag mode"] == 2 then
             ultimate.fakeLagfactor = adaptive_factor
+        elseif ultimate.cfg.vars["Lag mode"] == 3 then
+            ultimate.fakeLagfactor = factor
         elseif ultimate.cfg.vars["Lag mode"] == 4 then
-            //ultimate.fakeLagfactor = factortest
         elseif ultimate.cfg.vars["Lag mode"] == 5 then
             local chokes = math.ceil(64 / pertick)
-	        chokes = math_Clamp(chokes, 1, 21)
+            chokes = math_Clamp(chokes, 1, 21)
             factor = chokes
             ultimate.fakeLagfactor = chokes
+        end
+
+        if ultimate.cfg.vars["Lag mode"] == 1 or ultimate.cfg.vars["Lag mode"] == 3 then
+            ultimate.fakeLagfactor = factor
         end
 
         if ultimate.cfg.vars["Allah walk"] and me:IsFlagSet( FL_ONGROUND ) and ultimate.IsKeyDown(ultimate.cfg.binds["allahwalk"]) then
             ultimate.fakeLagfactor = 21
         end
-
-        //if ultimate.cfg.vars["Fakelag comp"] == 2 and ded.GetCurrentCharge() > 0 then
-        //    local nfactor = ultimate.fakeLagfactor - ded.GetMaxShiftTicks() - 1
-        //    ultimate.fakeLagfactor = math_Clamp( nfactor, 0, 21 )
-        //end
 
         if shouldlag(cmd) then
             ultimate.SendPacket = false
@@ -7601,16 +7817,13 @@ do
                 ultimate.fakeLagTicks = ultimate.fakeLagfactor
                 ultimate.SendPacket = true
                 pLocalPlayer.simtime_updated = true
-               --ded.UpdateClientAnimation( pLocalPlayer:EntIndex() )
             else
                 ultimate.fakeLagTicks = ultimate.fakeLagTicks - 1
             end
-
         else
             if ultimate.fakeLagfactor > 0 then ultimate.fakeLagfactor = 0 end
             ultimate.SendPacket = true
             pLocalPlayer.simtime_updated = true
-            --ded.UpdateClientAnimation( pLocalPlayer:EntIndex() )
         end
     end
 end
@@ -9059,7 +9272,7 @@ function ultimate.DrawESP()
     end
 
     local isCheater = ultimate.trackedPlayers and ultimate.trackedPlayers[steamId]
-    local isPriority = ultimate.cfg.priorityList and ultimate.cfg.priorityList[steamId]
+    local isPriority = ultimate.cfg.priorities and ultimate.cfg.priorities[steamId]
 
     local tw, th = surface.GetTextSize(name)
     local x_pos = poses[pos]-ultimate.getTextX(v,tw,pos)
@@ -9095,6 +9308,34 @@ function ultimate.DrawESP()
 
     ttbl[pos] = ttbl[pos] + 0.8
  end
+
+        if ultimate.cfg.vars["Priority ESP"] then
+            local prio = v.Priority
+            
+            if prio and prio ~= "" then
+                local pos = ultimate.cfg.vars["Priority ESP pos"]
+                local text = string.upper(prio)
+
+                local col = Color(255, 255, 255)
+                if text == "RAGE" then
+                    col = Color(150, 0, 0, 255)
+                elseif text == "MEDIUM" then
+                    col = Color(255, 140, 0, 255) 
+                elseif text == "LOW" then
+                    col = Color(0, 150, 150, 255) 
+                end
+
+                local tw, th = surface.GetTextSize(text)
+                local x_pos = poses[pos] - ultimate.getTextX(v, tw, pos)
+                local y_pos = ultimate.getTextY(MaxY, MinY, th, pos, ttbl[pos])
+
+                surface.SetTextColor(col)
+                surface.SetTextPos(x_pos, y_pos)
+                surface.DrawText(text)
+
+                ttbl[pos] = ttbl[pos] + 0.8
+            end
+        end
 
     surface.SetTextColor( ultimate.Colors[255] )
 
@@ -11924,16 +12165,34 @@ do
     local missedTicks = 0
     local lastSimTime = 0
 
-    function ultimate.PreFrameStageNotify(stage)
-        local plys = player.GetAll()
-        local interval = engine.TickInterval()
+    local FRAME_START = 0
+    local FRAME_NET_UPDATE_START = 1
+    local FRAME_NET_UPDATE_POSTDATAUPDATE_START = 2
+    local FRAME_NET_UPDATE_POSTDATAUPDATE_END = 3
+    local FRAME_NET_UPDATE_END = 4
+    local FRAME_RENDER_START = 5
+    local FRAME_RENDER_END = 6
 
-        if stage == 3 then
+    function ultimate.PreFrameStageNotify( stage )
+        local plys = player.GetAll()
+
+        if stage == FRAME_NET_UPDATE_POSTDATAUPDATE_END then
+
             ultimate.entTableUpdate()
-            ultimate.FillLocalNetworkData({me:GetNetworkOrigin()})
+
+            plys = player.GetAll()
+
+            local orig = me:GetNetworkOrigin()
+
+            local data = {}
+
+            data[1] = orig      // last networked origin
+
+            ultimate.FillLocalNetworkData( data )
 
             for i = 1, #plys do
                 local v = plys[i]
+
                 local cur_simtime = ded.GetSimulationTime(v:EntIndex())
                 local cur_pos = v:GetNetworkOrigin()
 
@@ -11941,15 +12200,20 @@ do
                     v.ult_prev_simtime = cur_simtime
                     v.ult_prev_pos = cur_pos
                     v.flticks = 0
+                    v.missedanimticks = 0
                     v.simtime_updated = false
                     v.break_lc = false
-                    ultimate.btrecords[v] = {}
-                    ultimate.predicted[v] = {}
+
+                    ultimate.btrecords[ v ] = {}
+                    ultimate.predicted[ v ] = {}
+
                     v.aimshots = 0
                     v.fakepitch = v:EyeAngles().p > 90
-                elseif v.ult_prev_simtime ~= cur_simtime then
-                    local flticks = math.floor((cur_simtime - v.ult_prev_simtime) / interval + 0.5)
-                    v.flticks = math.Clamp(flticks, 1, 24)
+
+                elseif v.ult_prev_simtime != cur_simtime then
+                    local flticks = ultimate.TIME_TO_TICKS(cur_simtime-v.ult_prev_simtime)
+
+                    v.flticks = math_Clamp(flticks,1,24)
                     v.ult_prev_simtime = cur_simtime
                     v.break_lc = cur_pos:DistToSqr(v.ult_prev_pos) > 4096
                     v.ult_prev_pos = cur_pos
@@ -11959,79 +12223,108 @@ do
                     v.simtime_updated = false
                 end
 
-                if ultimate.canBacktrack(v) and v ~= me and v.simtime_updated then
+                if ultimate.canBacktrack(v) and v != me and v.simtime_updated then
                     ultimate.recordBacktrack(v)
                 end
 
                 if v.break_lc then
-                    ultimate.btrecords[v] = {}
+                    ultimate.btrecords[ v ] = {}
                 end
             end
-        elseif stage == 1 then
-            if not ultimate.cfg.vars["Extrapolation"] then return end
+        elseif stage == FRAME_NET_UPDATE_START then
+            plys = player.GetAll()
+
             for i = 1, #plys do
                 local v = plys[i]
+
                 if v == me then continue end
+                if not ultimate.cfg.vars["Extrapolation"] then continue end
                 v.m_bPreDataUpdate = true
-                v.m_flOldSimulationTime = ded.GetSimulationTime(v:EntIndex())
-                v.m_vecOldOrigin = v:GetNetworkOrigin()
-                v.m_vecOldVelocity = v:GetAbsVelocity()
+			    v.m_flOldSimulationTime = ded.GetSimulationTime( v:EntIndex() )
+			    v.m_vecOldOrigin = v:GetNetworkOrigin()
+			    v.m_vecOldVelocity = v:GetAbsVelocity()
             end
-        elseif stage == 5 then
-            local resolver_enabled = ultimate.cfg.vars["Resolver"]
-            local mode = ultimate.cfg.vars["Resolver mode"]
-            local brute_angles = {
-                [1] = {-89, 89},
-                [2] = {-180, -89, 89, 180},
-                [3] = {-180, -120, -60, 60, 120, 180}
-            }
+
+        elseif stage == FRAME_RENDER_START then
+            plys = player.GetAll()
 
             for i = 1, #plys do
                 local v = plys[i]
-                if v == me or not resolver_enabled or not v.shots_fired then continue end
-                if ultimate.cfg.resolver[v:SteamID64()] == false then continue end
 
-                local brute_table = brute_angles[mode] or brute_angles[3]
-                local idx = (v.shots_fired % #brute_table) + 1
-                local angs = Angle(0, brute_table[idx] + v:EyeAngles().y, 0)
+                local should_resolve = ultimate.cfg.resolver[v:SteamID64()] != false
 
-                v:SetRenderAngles(angs)
-                ded.InvalidateBoneCache(v:EntIndex())
-                ded.SetCurrentLowerBodyYaw(v:EntIndex(), angs.y)
-            end
-        elseif stage == 4 then
-            if not ultimate.cfg.vars["Extrapolation"] then return end
-            local air_accel = GetConVar("sv_airaccelerate"):GetFloat() * interval
+                if v == me then continue end
 
-            for i = 1, #plys do
-                local v = plys[i]
-                if v == me or not v.m_bPreDataUpdate then continue end
+                if ultimate.cfg.vars["Resolver"] and v.shots_fired and should_resolve then
+                    local mode = ultimate.cfg.vars["Resolver mode"]
 
-                local update = false
-                if not v:GetNetworkOrigin():IsEqualTol(v.m_vecOldOrigin, 0.1) then
-                    v.m_nPrevUpdateTick = v.m_nLastUpdateTick or engine.TickCount()
-                    update = true
-                end
+                    ultimate.bruteforceAngles = {-89, 89}
 
-                local time_delta = ded.GetSimulationTime(v:EntIndex()) - v.m_flOldSimulationTime
-                if time_delta > 0 then
-                    v.m_nPrevUpdateTick = engine.TickCount() - math.floor(time_delta / interval + 0.5)
-                    update = true
-                end
+                    ultimate.bruteYaw = {-180, -89, 89, 180}
 
-                if update then
-                    v.m_nLastUpdateTick = engine.TickCount()
-                    v.m_nSimulationTicks = math.Clamp(v.m_nLastUpdateTick - v.m_nPrevUpdateTick, 1, 24)
-                    v.m_bBreaksLagCompensation = (v:GetNetworkOrigin() - v.m_vecOldOrigin):LengthSqr() > 4096
-                    
-                    if not v.m_bBreaksLagCompensation then
-                        v.m_nStrafeType, v.m_flAirAngle = ultimate.FindBestAirAngle(v.m_vecOldVelocity, v:GetAbsVelocity(), v.m_nSimulationTicks, air_accel, v:GetMaxSpeed())
-                    else
-                        v.m_nStrafeType = 0
-                        v.m_flAirAngle = 0
+                    ultimate.bruteYawClassic = {-180, -120, -60, 60, 120, 180}
+
+                    local angs = Angle()
+
+                    local brute_table
+
+                    if mode == 1 then
+                        brute_table = ultimate.bruteforceAngles
+                    elseif mode == 2 then
+                        brute_table = ultimate.bruteYaw
+                    elseif mode == 3 then
+                        brute_table = ultimate.bruteYawClassic
                     end
+
+                    local idx = (v.shots_fired % #brute_table) + 1
+                    angs.y = brute_table[idx] + v:EyeAngles().y
+
+                    v:SetRenderAngles(angs)
+
+                    ded.InvalidateBoneCache(v:EntIndex())
+                    ded.SetCurrentLowerBodyYaw(v:EntIndex(), angs.y)
                 end
             end
+        elseif stage == FRAME_NET_UPDATE_END then
+            plys = player.GetAll()
+
+            for i = 1, #plys do
+                local v = plys[i]
+                local LAG_COMPENSATION_TELEPORTED_DISTANCE_SQR = 64 * 64
+
+                if v == me then continue end
+
+                if not ultimate.cfg.vars["Extrapolation"] then continue end
+
+                if ( v.m_bPreDataUpdate ) then
+
+				    local update = false
+
+    				if ( !v:GetNetworkOrigin():IsEqualTol( v.m_vecOldOrigin, 0 ) ) then
+    					v.m_nPrevUpdateTick = v.m_nLastUpdateTick || engine.TickCount()
+    					update = true
+    				end
+
+    				local time_delta = ded.GetSimulationTime( v:EntIndex() ) - v.m_flOldSimulationTime
+
+    				if ( time_delta > 0 ) then
+    					v.m_nPrevUpdateTick = engine.TickCount() - ultimate.TIME_TO_TICKS( time_delta )
+    					update = true
+    				end
+
+    				if ( update ) then
+    					v.m_nLastUpdateTick = engine.TickCount()
+    					v.m_nSimulationTicks = v.m_nLastUpdateTick - v.m_nPrevUpdateTick
+    					v.m_bBreaksLagCompensation = ( v:GetNetworkOrigin() - v.m_vecOldOrigin ):LengthSqr() > LAG_COMPENSATION_TELEPORTED_DISTANCE_SQR
+    					if v.m_bBreaksLagCompensation then
+                            v.m_needStrafeCalc = true
+                        else
+                            v.m_nStrafeType = 0
+                            v.m_flAirAngle = 0
+                        end
+    				end
+     			end
+			end
         end
     end
 end
@@ -12548,3 +12841,14 @@ ultimate.AddHook( "SetupWorldFog" )
 ultimate.AddHook( "SetupSkyboxFog" )
 
 ultimate.AddHook( "CalcMainActivity" )
+-- мишатор не смотри комментарии
+-- мишатор не смотри комментарии
+-- мишатор не смотри комментарии
+-- мишатор не смотри комментарии
+-- мишатор не смотри комментарии
+-- мишатор не смотри комментарии
+-- мишатор не смотри комментарии
+-- мишатор не смотри комментарии
+-- мишатор не смотри комментарии
+-- мишатор не смотри комментарии
+-- мишатор не смотри комментарии
