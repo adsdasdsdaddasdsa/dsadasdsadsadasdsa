@@ -6020,7 +6020,7 @@ end
 function ultimate.IsTickHittable( ply, cmd, tick )
     if ded.GetLatency(0) > 1 then return false end
 
-    local serverArriveTick = ded.GetServerTime() + ded.GetLatency(0) + ded.GetLatency(1)
+    local serverArriveTick = ded.GetServerTime(cmd) + ded.GetLatency(0) + ded.GetLatency(1)
     local diff = serverArriveTick - ultimate.btrecords[ ply ][ tick ].simulationtime
 
     if diff > ultimate.cfg.vars["Backtrack time"] / 1000 then return false end
