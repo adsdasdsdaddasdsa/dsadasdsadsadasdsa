@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webber Combat</title>
+    <style>
+        :root {
+            --bg-color: #0a1019;
+            --card-bg: #1a2930;
+            --accent-blue: #007bff;
+            --accent-teal: #00cc99;
+            --text-orange: #ff7700;
+            --accent-purple: #a18cd1;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-color); color: #ffffff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex; flex-direction: column; height: 100vh;
+            overflow: hidden; user-select: none; -webkit-user-select: none;
+        }
+
+        .app-container { flex: 1; display: flex; flex-direction: column; align-items: center; overflow: hidden; position: relative; }
+        .screen { display: none; flex-direction: column; align-items: center; width: 100%; height: 100%; overflow-y: auto; padding-bottom: 20px; }
+        .screen.active { display: flex; }
+
+        .header { width: 90%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+        .title { font-size: 20px; font-weight: bold; color: #ffffff; display: flex; align-items: center; gap: 5px; }
+        .level-badge { background: var(--card-bg); padding: 4px 10px; border-radius: 12px; font-size: 12px; border: 1px solid #2d264d; }
+
+        .stats-container { width: 90%; max-width: 400px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; }
+        .stat-card { background: var(--card-bg); border-radius: 10px; padding: 10px 5px; text-align: center; border: 2px solid var(--text-orange); box-shadow: 0 0 8px rgba(255, 119, 0, 0.2); }
+        .stat-label { font-size: 10px; color: #7d7696; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .stat-value { font-size: 14px; font-weight: bold; }
+        .stat-value.coins { color: var(--text-orange); }
+        .stat-value.earn { color: var(--accent-purple); }
+        .stat-value.sec { color: #00f2fe; }
+
+        .level-progress-bar { width: 90%; max-width: 400px; height: 4px; background: #1f1a36; border-radius: 2px; margin-top: 12px; overflow: hidden; }
+        .level-progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-teal)); transition: width 0.3s; }
+
+        .main-balance { font-size: 38px; font-weight: 800; color: var(--text-orange); display: flex; align-items: center; gap: 10px; margin-top: auto; margin-bottom: 20px; }
+
+        .click-area { position: relative; width: 240px; height: 240px; margin-bottom: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .click-circle { width: 220px; height: 220px; background: radial-gradient(circle, #1a3b5d 0%, #0a1824 100%); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 0 40px rgba(0, 123, 255, 0.2); border: 4px solid #1a3b5e; transition: transform 0.05s ease; position: relative; z-index: 2; touch-action: manipulation; }
+        .click-circle:active { transform: scale(0.96); }
+        .webber-image { font-size: 90px; filter: drop-shadow(0 0 20px rgba(139, 195, 74, 0.4)); }
+        .action-hint { font-size: 16px; color: #ffffff; margin-top: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0, 123, 255, 0.6); }
+
+        .energy-container { width: 80%; max-width: 350px; margin-bottom: 30px; }
+        .energy-text { display: flex; justify-content: center; gap: 5px; font-size: 12px; color: #7d7696; margin-bottom: 5px; }
+        .energy-num { color: #ffffff; font-weight: bold; }
+        .energy-bar { width: 100%; height: 8px; background: #1f1a36; border-radius: 4px; overflow: hidden; }
+        .energy-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #007bff, #00cc99); transition: width 0.1s linear; }
+
+        .damage-text { position: absolute; font-size: 24px; font-weight: 800; color: #ff3b30; pointer-events: none; z-index: 10; animation: floatDamage 0.6s ease-out forwards; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        @keyframes floatDamage { 0% { transform: translateY(0) scale(1.2); opacity: 1; } 100% { transform: translateY(-120px) scale(0.8); opacity: 0; } }
+
+        .nav-bar { width: 100%; background: var(--card-bg); display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 0 20px 0; border-top: 1px solid #1f1a36; flex-shrink: 0; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #7d7696; cursor: pointer; gap: 4px; transition: color 0.2s; }
+        .nav-item.active { color: var(--text-orange); }
+        .nav-icon { font-size: 20px; }
+
+        .page-title { font-size: 24px; font-weight: bold; margin: 20px 0 15px; color: var(--text-orange); }
+        .shop-container, .list-container { width: 90%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
+        
+        .upgrade-card {
+            background: linear-gradient(145deg, #243340, #1a2530); border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); transition: transform 0.1s;
+        }
+        .upgrade-card:active { transform: scale(0.98); }
+        .upgrade-info h3 { margin: 0 0 5px 0; font-size: 16px; }
+        .upgrade-info p { margin: 0; font-size: 12px; color: #7d7696; }
+        
+        .buy-btn {
+            background: linear-gradient(180deg, #ff8c00, #ff6600); color: #fff; border: none; padding: 10px 18px; border-radius: 10px;
+            font-weight: bold; cursor: pointer; font-size: 14px; box-shadow: 0 4px 0 #cc5200, 0 6px 10px rgba(0,0,0,0.3); transition: all 0.1s;
+        }
+        .buy-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #cc5200; }
+        .buy-btn:disabled { background: linear-gradient(180deg, #555, #444); box-shadow: 0 4px 0 #333; color: #888; cursor: not-allowed; transform: none; }
+        
+        .list-item {
+            background: linear-gradient(145deg, #243340, #1a2530); border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px; padding: 18px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        .list-icon { font-size: 28px; width: 40px; text-align: center; }
+        .list-text h4 { margin: 0 0 5px 0; color: #fff; font-size: 15px; }
+        .list-text p { margin: 0; font-size: 12px; color: #7d7696; }
+        
+        .reset-btn { background: linear-gradient(180deg, #ff3b30, #cc2d24); color: white; border: none; padding: 14px 28px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 30px; box-shadow: 0 4px 0 #991f1a; }
+        .reset-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #991f1a; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- ЭКРАН 1: ТАП -->
+        <div id="screen-tap" class="screen active">
+            <div class="header">
+                <div class="title">🕷️ Webber Combat</div>
+                <div class="level-badge" id="level-badge">Lv. 1</div>
+            </div>
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-label">Coins</div>
+                    <div class="stat-value coins" id="stat-coins">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Per Click</div>
+                    <div class="stat-value earn" id="stat-click">+1</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Per Sec</div>
+                    <div class="stat-value sec" id="stat-sec">0/s</div>
+                </div>
+            </div>
+            <div class="level-progress-bar">
+                <div class="level-progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="main-balance">
+                <span>💰</span><span id="balance">0</span>
+            </div>
+            <div class="click-area" id="clickArea">
+                <div class="click-circle" id="webberTarget">
+                    <span class="webber-image">🕷️</span>
+                </div>
+                <div class="action-hint">⚡ Накулачить Веббера!</div>
+            </div>
+            <div class="energy-container">
+                <div class="energy-text">
+                    <!-- Теперь показываем и трату, и реген -->
+                    <span>⚡ Energy (<span id="energy-cost-display" style="color:#ff3b30;">-1</span>/тап, <span id="energy-regen-display" style="color:#00f2fe;">+2</span>/с)</span>
+                    <span class="energy-num"><span id="energy-current">1000</span> / <span id="energy-max">1000</span></span>
+                </div>
+                <div class="energy-bar">
+                    <div class="energy-fill" id="energy-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ЭКРАН 2: МАЙНИНГ -->
+        <div id="screen-mine" class="screen">
+            <div class="page-title">⛏️ Майнинг</div>
+            <div class="shop-container">
+                <div class="upgrade-card">
+                    <div class="upgrade-info">
+                        <h3>👊 Сила кулака</h3>
+                        <p>Прибавка +<span id="click-bonus-display">1</span> к клику</p>
+                    </div>
+                    <button class="buy-btn" id="btn-buy-click" onclick="buyUpgrade('click')">💰 <span id="cost-click">10</span></button>
+                </div>
+                <div class="upgrade-card">
+                    <div class="upgrade-info">
+                        <h3>🕷️ Паутина-майнер</h3>
+                        <p>Прибавка +1 в секунду</p>
+                    </div>
+                    <button class="buy-btn" id="btn-buy-sec" onclick="buyUpgrade('sec')">💰 <span id="cost-sec">50</span></button>
+                </div>
+                <div class="upgrade-card">
+                    <div class="upgrade-info">
+                        <h3>🔌 Батарейка</h3>
+                        <p>+100 макс. энергии</p>
+                    </div>
+                    <button class="buy-btn" id="btn-buy-energy" onclick="buyUpgrade('energy')">💰 <span id="cost-energy">100</span></button>
+                </div>
+                <div class="upgrade-card">
+                    <div class="upgrade-info">
+                        <h3>⚡ Реактор Веббера</h3>
+                        <p>Умножает регенерацию x2 (до <span id="regen-bonus-display">4</span>/с)</p>
+                    </div>
+                    <button class="buy-btn" id="btn-buy-regen" onclick="buyUpgrade('regen')">💰 <span id="cost-regen">150</span></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ЭКРАН 3: НАГРАДЫ -->
+        <div id="screen-awards" class="screen">
+            <div class="page-title">🏆 Награды</div>
+            <div class="list-container">
+                <div class="list-item">
+                    <div class="list-icon">🥉</div>
+                    <div class="list-text"><h4>Новичок</h4><p>Накликать 1,000 монет</p></div>
+                </div>
+                <div class="list-item">
+                    <div class="list-icon">🥈</div>
+                    <div class="list-text"><h4>Боец</h4><p>Накликать 10,000 монет</p></div>
+                </div>
+                <div class="list-item">
+                    <div class="list-icon">🥇</div>
+                    <div class="list-text"><h4>Веббер-Мастер</h4><p>Накликать 100,000 монет</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ЭКРАН 4: НАСТРОЙКИ -->
+        <div id="screen-settings" class="screen">
+            <div class="page-title">⚙️ Настройки</div>
+            <div class="list-container">
+                <div class="list-item">
+                    <div class="list-icon">🔊</div>
+                    <div class="list-text"><h4>Звук</h4><p>В разработке...</p></div>
+                </div>
+                <div class="list-item">
+                    <div class="list-icon">🌐</div>
+                    <div class="list-text"><h4>Язык</h4><p>Русский</p></div>
+                </div>
+            </div>
+            <button class="reset-btn" onclick="resetGame()">Сбросить прогресс</button>
+        </div>
+
+    </div>
+
+    <!-- НИЖНЕЕ МЕНЮ -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('tap', this)">
+            <span class="nav-icon">🎯</span><span>Tap</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('mine', this)">
+            <span class="nav-icon">⛏️</span><span>Mine</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('awards', this)">
+            <span class="nav-icon">🏆</span><span>Awards</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('settings', this)">
+            <span class="nav-icon">⚙️</span><span>Settings</span>
+        </div>
+    </div>
+
+    <script>
+        // --- НАСТРОЙКИ ИГРЫ ---
+        let coins = 0;
+        let totalCoins = 0;
+        let clickPower = 1;
+        let clickBonus = 1; // Следующая прибавка к клику (1, 2, 4, 6, 8...)
+        let energyPerClick = 1; // Сколько энергии тратится за 1 тап
+        let incomePerSecond = 0;
+        let energyRegenRate = 2; // Скорость восстановления энергии (будет умножаться)
+        let currentEnergy = 1000;
+        let maxEnergy = 1000;
+        let level = 1;
+
+        // Цены улучшений
+        let clickCost = 10;
+        let secCost = 50;
+        let energyCost = 100;
+        let regenCost = 150;
+
+        // DOM Элементы
+        const balanceEl = document.getElementById('balance');
+        const statCoinsEl = document.getElementById('stat-coins');
+        const statClickEl = document.getElementById('stat-click');
+        const statSecEl = document.getElementById('stat-sec');
+        const webberTarget = document.getElementById('webberTarget');
+        const clickArea = document.getElementById('clickArea');
+        const energyCurrentEl = document.getElementById('energy-current');
+        const energyMaxEl = document.getElementById('energy-max');
+        const energyFillEl = document.getElementById('energy-fill');
+        const energyCostDisplay = document.getElementById('energy-cost-display');
+        const energyRegenDisplay = document.getElementById('energy-regen-display');
+        const progressFill = document.getElementById('progress-fill');
+        const levelBadge = document.getElementById('level-badge');
+
+        function formatCoins(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return Math.floor(num);
+        }
+
+        function updateUI() {
+            balanceEl.textContent = formatCoins(coins);
+            statCoinsEl.textContent = formatCoins(coins);
+            statClickEl.textContent = '+' + clickPower;
+            statSecEl.textContent = incomePerSecond + '/s';
+            
+            energyCurrentEl.textContent = Math.floor(currentEnergy);
+            energyMaxEl.textContent = maxEnergy;
+            energyFillEl.style.width = (currentEnergy / maxEnergy) * 100 + '%';
+            
+            // Обновляем подсказки у энергии
+            energyCostDisplay.textContent = '-' + energyPerClick;
+            energyRegenDisplay.textContent = '+' + energyRegenRate;
+
+            let newLevel = Math.floor(totalCoins / 5000) + 1;
+            if (newLevel !== level) { level = newLevel; }
+            levelBadge.textContent = 'Lv. ' + level;
+            let progressInLevel = (totalCoins % 5000) / 5000 * 100;
+            progressFill.style.width = progressInLevel + '%';
+
+            // Обновление магазина
+            document.getElementById('click-bonus-display').textContent = clickBonus;
+            document.getElementById('cost-click').textContent = formatCoins(clickCost);
+            
+            document.getElementById('cost-sec').textContent = formatCoins(secCost);
+            document.getElementById('cost-energy').textContent = formatCoins(energyCost);
+            
+            // Для реактора показываем, какой реген будет СЛЕДУЮЩИМ после умножения на 2
+            document.getElementById('regen-bonus-display').textContent = energyRegenRate * 2;
+            document.getElementById('cost-regen').textContent = formatCoins(regenCost);
+
+            document.getElementById('btn-buy-click').disabled = coins < clickCost;
+            document.getElementById('btn-buy-sec').disabled = coins < secCost;
+            document.getElementById('btn-buy-energy').disabled = coins < energyCost;
+            document.getElementById('btn-buy-regen').disabled = coins < regenCost;
+        }
+
+        // --- ЛОГИКА КЛИКА ---
+        webberTarget.addEventListener('click', function(e) {
+            if (currentEnergy >= energyPerClick) {
+                currentEnergy -= energyPerClick;
+                coins += clickPower;
+                totalCoins += clickPower;
+                updateUI();
+                createDamageText(e);
+            }
+        });
+
+        function createDamageText(e) {
+            const float = document.createElement('div');
+            float.classList.add('damage-text');
+            float.textContent = '+' + clickPower;
+            const rect = clickArea.getBoundingClientRect();
+            float.style.left = (e.clientX - rect.left - 15) + 'px';
+            float.style.top = (e.clientY - rect.top - 20) + 'px';
+            clickArea.appendChild(float);
+            setTimeout(() => float.remove(), 600);
+        }
+
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.getElementById('screen-' + tabName).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // --- ЛОГИКА МАГАЗИНА ---
+        function buyUpgrade(type) {
+            if (type === 'click' && coins >= clickCost) {
+                coins -= clickCost;
+                clickPower += clickBonus;
+                if (clickBonus === 1) clickBonus = 2;
+                else if (clickBonus === 2) clickBonus = 4;
+                else clickBonus += 2;
+                energyPerClick = Math.max(1, Math.ceil(clickPower / 4));
+                clickCost = Math.floor(clickCost * 2.5); 
+            } 
+            else if (type === 'sec' && coins >= secCost) {
+                coins -= secCost;
+                incomePerSecond += 1;
+                secCost = Math.floor(secCost * 1.5);
+            } 
+            else if (type === 'energy' && coins >= energyCost) {
+                coins -= energyCost;
+                maxEnergy += 100;
+                currentEnergy += 100; 
+                energyCost = Math.floor(energyCost * 1.8);
+            }
+            else if (type === 'regen' && coins >= regenCost) {
+                coins -= regenCost;
+                // МУЛЬТИПЛИКАТИВНЫЙ РОСТ: Умножаем текущую регенерацию на 2!
+                energyRegenRate = energyRegenRate * 2;
+                // Цена тоже растет мультипликативно (в 4 раза), чтобы баланс не сломался
+                regenCost = Math.floor(regenCost * 4);
+            }
+            updateUI();
+        }
+
+        // --- ПАССИВНЫЙ ДОХОД И РЕГЕН ЭНЕРГИИ ---
+        setInterval(() => {
+            if (incomePerSecond > 0) {
+                coins += incomePerSecond;
+                totalCoins += incomePerSecond;
+            }
+            if (currentEnergy < maxEnergy) {
+                currentEnergy = Math.min(maxEnergy, currentEnergy + energyRegenRate);
+            }
+            updateUI();
+        }, 1000);
+
+        function resetGame() {
+            if (confirm('Вы уверены, что хотите сбросить весь прогресс?')) {
+                coins = 0; totalCoins = 0; clickPower = 1; clickBonus = 1; energyPerClick = 1;
+                incomePerSecond = 0; energyRegenRate = 2;
+                currentEnergy = 1000; maxEnergy = 1000; level = 1;
+                clickCost = 10; secCost = 50; energyCost = 100; regenCost = 150;
+                updateUI();
+            }
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
